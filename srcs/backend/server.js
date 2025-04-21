@@ -20,6 +20,7 @@ fastify.register(require('./routes/matchHistoryRoutes'));
 fastify.register(require('./routes/achievementsRoutes'));
 fastify.register(require('./routes/friendsRoutes'));
 fastify.register(require('./routes/friendRequestsRoutes'));
+fastify.register(require('./routes/chatMessagesRoutes'));
 
 const PORT = process.env.PORT || 3000;
 
