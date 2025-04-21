@@ -33,3 +33,7 @@ http://localhost:8080/
 
 TODO:
 ~ Check on friend requests module IT HAS ISSUES~~~~!!!!!
+
+Need to fully implement:
+	game invites
+	notifications
