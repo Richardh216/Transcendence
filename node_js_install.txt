@@ -28,3 +28,8 @@ http://localhost:3000/
 
 website:
 http://localhost:8080/
+
+
+
+TODO:
+~ Check on friend requests module IT HAS ISSUES~~~~!!!!!

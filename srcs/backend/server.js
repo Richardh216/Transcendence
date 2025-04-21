@@ -18,6 +18,8 @@ fastify.register(require('./routes/userStatsRoutes'));
 fastify.register(require('./routes/gameSettingsRoutes'));
 fastify.register(require('./routes/matchHistoryRoutes'));
 fastify.register(require('./routes/achievementsRoutes'));
+fastify.register(require('./routes/friendsRoutes'));
+fastify.register(require('./routes/friendRequestsRoutes'));
 
 const PORT = process.env.PORT || 3000;
 
