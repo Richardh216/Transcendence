@@ -17,6 +17,7 @@ fastify.register(require('./routes/userRoutes'));
 fastify.register(require('./routes/userStatsRoutes'));
 fastify.register(require('./routes/gameSettingsRoutes'));
 fastify.register(require('./routes/matchHistoryRoutes'));
+fastify.register(require('./routes/achievementsRoutes'));
 
 const PORT = process.env.PORT || 3000;
 
