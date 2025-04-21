@@ -28,38 +28,12 @@ Content-Type: application/json
 
 
 
-
-### ADD SCORE
-POST http://localhost:3000/scores HTTP/1.1
-Content-Type: application/json
-
-{
-	"user_id": 2,
-	"score": 500
-}
-
-### GET ALL SCORES
-GET http://localhost:3000/scores HTTP/1.1
-
-### GET ALL SCORES BY A USER
-GET http://localhost:3000/users/2/scores HTTP/1.1
-
-### DELETE SCORE
-DELETE http://localhost:3000/scores/6 HTTP/1.1
-
-
-
-
-
-
-
-
 ### ADD USER STATS
 POST http://localhost:3000/user-stats
 Content-Type: application/json
 
 {
-	"user_id": 3,
+	"user_id": 1,
 	"wins": 10,
 	"losses": 5,
 	"rank": "Gold",
@@ -67,11 +41,11 @@ Content-Type: application/json
 }
 
 ### GET USER STATS
-GET http://localhost:3000/users/3/stats
+GET http://localhost:3000/users/1/stats
 
 
 ### UPDATE USER STATS
-PUT http://localhost:3000/users/2/stats
+PUT http://localhost:3000/users/1/stats
 Content-Type: application/json
 
 {
@@ -84,3 +58,36 @@ Content-Type: application/json
 
 ### DELETE USER STATS
 DELETE http://localhost:3000/users/2/stats
+
+
+
+
+
+
+### Add Game Settings
+POST http://localhost:3000/game-settings
+Content-Type: application/json
+
+{
+	"user_id": 1,
+	"board_color": "#222222",
+	"paddle_color": "#ffffff",
+	"ball_color": "#ff0000",
+	"score_color": "#00ff00",
+	"sound_enabled": 1,
+	"vibration_enabled": 0
+}
+
+### Get User Game Settings
+GET http://localhost:3000/users/1/settings
+
+### Update Game Settings
+PUT http://localhost:3000/users/1/settings
+Content-Type: application/json
+
+{
+	"paddle_color": "#0000ff",
+	"sound_enabled": 0
+}
+
+

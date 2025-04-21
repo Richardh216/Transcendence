@@ -14,8 +14,8 @@ fastify.register(require('@punkish/fastify-better-sqlite3'), {
 });
 
 fastify.register(require('./routes/userRoutes'));
-// fastify.register(require('./routes/scoreRoutes'));
 fastify.register(require('./routes/userStatsRoutes'));
+fastify.register(require('./routes/gameSettingsRoutes'));
 
 const PORT = process.env.PORT || 3000;
 
