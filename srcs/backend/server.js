@@ -1,3 +1,9 @@
+/**
+ * TO DO:
+ * 	Hash password using argon2
+ * 	Create a login user function for safety!
+ */
+
 const fastify = require('fastify')( {logger: true} );
 const fs = require('fs'); //optional
 const path = require('path'); //optional

@@ -134,8 +134,8 @@ function gameSettingsRoutes (fastify, options, done) {
 	// Get user game settings by user ID
 	fastify.get('/users/:userId/settings', getUserGameSettingsOpts);
 
-	// Add game settings
-	fastify.post('/game-settings', addGameSettingsOpts); // Assuming a separate endpoint for adding
+	// Add game settings (requires user_id in body)
+	fastify.post('/game-settings', addGameSettingsOpts);
 
 	// Update game settings by user ID
 	fastify.put('/users/:userId/settings', updateGameSettingsOpts);
