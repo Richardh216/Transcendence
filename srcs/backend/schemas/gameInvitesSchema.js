@@ -29,7 +29,6 @@ const GameInviteDetails = {
 	}
 }
 
-
 module.exports = {
 	GameInvite,
 	GameInviteDetails,

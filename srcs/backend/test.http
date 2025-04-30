@@ -333,3 +333,44 @@ PUT http://localhost:3000/chat-messages/1/read HTTP/1.1
 ### DELETE CHAT MESSAGE BY ID
 DELETE http://localhost:3000/chat-messages/1 HTTP/1.1
 
+
+### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+
+### GET ALL GAME INVITES
+GET http://localhost:3000/game-invites HTTP/1.1
+
+### GET GAME INVITE BY ID
+GET http://localhost:3000/game-invites/1 HTTP/1.1
+
+### GET GAME INVITES SENT BY USER 1
+GET http://localhost:3000/users/1/sent-game-invites HTTP/1.1
+
+### GET GAME INVITES RECEIVED BY USER 2
+GET http://localhost:3000/users/2/received-game-invites HTTP/1.1
+
+### CREATE A GAME INVITE FROM USER 1 TO USER 2
+POST http://localhost:3000/game-invites HTTP/1.1
+Content-Type: application/json
+
+{
+	"from_user_id": 1,
+	"to_user_id": 2,
+	"status": "pending",
+	"timestamp": "2025-04-28T12:00:00.000Z",
+	"game_mode": "classic"
+}
+
+
+### UPDATE GAME INVITE STATUS (accepted/rejected/expired) (need to update id)
+PUT http://localhost:3000/game-invites/1/status HTTP/1.1
+Content-Type: application/json
+
+{
+	"status": "accepted"
+}
+
+### DELETE GAME INVITE
+DELETE http://localhost:3000/game-invites/1 HTTP/1.1
+
+
+### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
