@@ -1,5 +1,7 @@
 const getFriendRequests = async (req, reply) => {
 	try {
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		// Join with users table to get sender and receiver details
@@ -31,9 +33,11 @@ const getFriendRequests = async (req, reply) => {
 const getFriendRequest = async (req, reply) => {
 	try {
 		const { id } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
-		 const request = db.prepare(`
+		const request = db.prepare(`
 			SELECT
 				fr.id,
 				fr.from_user_id,
@@ -52,7 +56,6 @@ const getFriendRequest = async (req, reply) => {
 			WHERE fr.id = ?
 		`).get(id);
 
-
 		if (!request) {
 			reply.code(404).send({ message: 'Friend request not found' });
 		} else {
@@ -67,9 +70,11 @@ const getFriendRequest = async (req, reply) => {
 const getSentFriendRequests = async (req, reply) => {
 	try {
 		const { userId } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
-		 const requests = db.prepare(`
+		const requests = db.prepare(`
 			SELECT
 				fr.id,
 				fr.from_user_id,
@@ -98,9 +103,11 @@ const getSentFriendRequests = async (req, reply) => {
 const getReceivedFriendRequests = async (req, reply) => {
 	try {
 		const { userId } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
-		 const requests = db.prepare(`
+		const requests = db.prepare(`
 			SELECT
 				fr.id,
 				fr.from_user_id,
@@ -130,52 +137,53 @@ const getReceivedFriendRequests = async (req, reply) => {
 const addFriendRequest = async (req, reply) => {
 	try {
 		const { from_user_id, to_user_id } = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
-		const date = new Date().toISOString(); // Or use CURRENT_TIMESTAMP in SQL
+		const date = new Date().toISOString();
 
 		if (!from_user_id || !to_user_id) {
-			 reply.code(400).send({ message: 'from_user_id and to_user_id are required' });
-			 return;
+			reply.code(400).send({ message: 'from_user_id and to_user_id are required' });
+			return;
 		}
 
 		if (from_user_id === to_user_id) {
-			 reply.code(400).send({ message: 'Cannot send a friend request to yourself' });
-			 return;
+			reply.code(400).send({ message: 'Cannot send a friend request to yourself' });
+			return;
 		}
 
-		// Check if users exist
+		// Check if users exist (could be the cause of errors)
 		const fromUserExists = db.prepare('SELECT id FROM users WHERE id = ?').get(from_user_id);
 		const toUserExists = db.prepare('SELECT id FROM users WHERE id = ?').get(to_user_id);
 
 		if (!fromUserExists || !toUserExists) {
-			 reply.code(400).send({ message: 'Invalid from_user_id or to_user_id' });
-			 return;
+			reply.code(400).send({ message: 'Invalid from_user_id or to_user_id' });
+			return;
 		}
 
-		// Check if a pending request already exists (in either direction)
-		const existingRequest = db.prepare('SELECT id FROM friend_requests WHERE (from_user_id = ? AND to_user_id = ?) OR (from_user_id = ? AND to_user_id = ?) AND status = "pending"').get(from_user_id, to_user_id, to_user_id, from_user_id);
+		// Check if a pending request already exists (in either direction) (could be the coulprit too)
+		const existingRequest = db.prepare('SELECT id FROM friend_requests WHERE (from_user_id = ? AND to_user_id = ?) OR (from_user_id = ? AND to_user_id = ?) AND status = \'pending\'').get(from_user_id, to_user_id, to_user_id, from_user_id);
 
 		if (existingRequest) {
-			 reply.code(409).send({ message: 'A pending friend request already exists' });
-			 return;
+			reply.code(409).send({ message: 'A pending friend request already exists' });
+			return;
 		}
 
-		 // Check if they are already friends
-		 const alreadyFriends = db.prepare('SELECT 1 FROM friends WHERE user_id = ? AND friend_id = ?').get(from_user_id, to_user_id);
-		 if (alreadyFriends) {
-			 reply.code(409).send({ message: 'You are already friends with this user' });
-			 return;
-		 }
-
+		// Check if they are already friends (could be the coulprit too)
+		const alreadyFriends = db.prepare('SELECT 1 FROM friends WHERE user_id = ? AND friend_id = ?').get(from_user_id, to_user_id);
+		if (alreadyFriends) {
+			reply.code(409).send({ message: 'You are already friends with this user' });
+			return;
+		}
 
 		try {
 			const result = db.prepare('INSERT INTO friend_requests (from_user_id, to_user_id, status, date) VALUES (?, ?, ?, ?)').run(from_user_id, to_user_id, 'pending', date);
 			const newRequestId = result.lastInsertedRowid;
-			 const newRequest = db.prepare('SELECT * FROM friend_requests WHERE id = ?').get(newRequestId); // Return basic request object
+			const newRequest = db.prepare('SELECT * FROM friend_requests WHERE id = ?').get(newRequestId); // Return basic request object
 			reply.code(201).send(newRequest);
 		} catch (err) {
-			 req.log.error(err);
-			 reply.code(500).send({ message: 'Error adding friend request', error: err.message });
+			req.log.error(err);
+			reply.code(500).send({ message: 'Error adding friend request', error: err.message });
 		}
 	} catch (error) {
 		req.log.error(error);
@@ -187,14 +195,16 @@ const updateFriendRequestStatus = async (req, reply) => {
 	try {
 		const { id } = req.params;
 		const { status } = req.body; // 'accepted' or 'rejected'
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		if (!status || !['accepted', 'rejected'].includes(status)) {
-			 reply.code(400).send({ message: 'status is required and must be "accepted" or "rejected"' });
-			 return;
+			reply.code(400).send({ message: 'status is required and must be "accepted" or "rejected"' });
+			return;
 		}
 
-		const request = db.prepare('SELECT * FROM friend_requests WHERE id = ? AND status = "pending"').get(id);
+		const request = db.prepare('SELECT * FROM friend_requests WHERE id = ? AND status = \'pending\'').get(id);
 
 		if (!request) {
 			reply.code(404).send({ message: 'Pending friend request not found' });
@@ -206,29 +216,27 @@ const updateFriendRequestStatus = async (req, reply) => {
 		const updateResult = db.prepare('UPDATE friend_requests SET status = ? WHERE id = ?').run(status, id);
 
 		if (updateResult.changes === 0) {
-			 reply.code(500).send({ message: 'Failed to update request status' }); // Should not happen if request was found
-			 return;
+			reply.code(500).send({ message: 'Failed to update request status' }); // Should not happen if request was found
+			return;
 		}
 
 		if (status === 'accepted') {
 			try {
-				 // Add friendship in both directions
-				 db.prepare('INSERT INTO friends (user_id, friend_id) VALUES (?, ?)').run(from_user_id, to_user_id);
-				 db.prepare('INSERT INTO friends (user_id, friend_id) VALUES (?, ?)').run(to_user_id, from_user_id);
-				 reply.send({ message: 'Friend request accepted and friendship created' });
+				// Add friendship in both directions
+				db.prepare('INSERT INTO friends (user_id, friend_id) VALUES (?, ?)').run(from_user_id, to_user_id);
+				db.prepare('INSERT INTO friends (user_id, friend_id) VALUES (?, ?)').run(to_user_id, from_user_id);
+				reply.send({ message: 'Friend request accepted and friendship created' });
 			} catch (err) {
 				if (err.message.includes('UNIQUE constraint failed')) {
-					 reply.code(409).send({ message: 'Friendship already exists, request marked as accepted' });
-				 } else {
-					 req.log.error(err);
-					 reply.code(500).send({ message: 'Error creating friendship after accepting request', error: err.message });
-					 // Optionally, roll back the status update if friendship creation fails
-				 }
+					reply.code(409).send({ message: 'Friendship already exists, request marked as accepted' });
+				} else {
+					req.log.error(err);
+					reply.code(500).send({ message: 'Error creating friendship after accepting request', error: err.message });
+				}
 			}
 		} else { // status === 'rejected'
-			 reply.send({ message: 'Friend request rejected' });
+			reply.send({ message: 'Friend request rejected' });
 		}
-
 
 	} catch (error) {
 		req.log.error(error);
@@ -239,6 +247,8 @@ const updateFriendRequestStatus = async (req, reply) => {
 const deleteFriendRequest = async (req, reply) => {
 	try {
 		const { id } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		const result = db.prepare('DELETE FROM friend_requests WHERE id = ?').run(id);
@@ -253,7 +263,6 @@ const deleteFriendRequest = async (req, reply) => {
 		reply.code(500).send({ message: 'Error deleting friend request' });
 	}
 };
-
 
 module.exports = {
 	getFriendRequests,

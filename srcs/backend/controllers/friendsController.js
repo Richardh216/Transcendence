@@ -1,6 +1,8 @@
 const getUserFriends = async (req, reply) => {
 	try {
 		const { userId } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		// Join with the users table to get friend details
@@ -28,6 +30,8 @@ const getUserFriends = async (req, reply) => {
 const checkFriendship = async (req, reply) => {
 	try {
 		const { userId, friendId } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		const friendship = db.prepare('SELECT 1 FROM friends WHERE user_id = ? AND friend_id = ?').get(userId, friendId);
@@ -43,15 +47,16 @@ const checkFriendship = async (req, reply) => {
 	}
 };
 
-
 const addFriendship = async (req, reply) => {
 	try {
 		const { user_id, friend_id } = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		if (!user_id || !friend_id) {
-			 reply.code(400).send({ message: 'user_id and friend_id are required' });
-			 return;
+			reply.code(400).send({ message: 'user_id and friend_id are required' });
+			return;
 		}
 
 		if (user_id === friend_id) {
@@ -60,14 +65,13 @@ const addFriendship = async (req, reply) => {
 		}
 
 		// Optional: Check if both users exist
-		 const user1Exists = db.prepare('SELECT id FROM users WHERE id = ?').get(user_id);
-		 const user2Exists = db.prepare('SELECT id FROM users WHERE id = ?').get(friend_id);
+		const user1Exists = db.prepare('SELECT id FROM users WHERE id = ?').get(user_id);
+		const user2Exists = db.prepare('SELECT id FROM users WHERE id = ?').get(friend_id);
 
-		 if (!user1Exists || !user2Exists) {
-			  reply.code(400).send({ message: 'Invalid user_id or friend_id' });
-			  return;
-		 }
-
+		if (!user1Exists || !user2Exists) {
+			reply.code(400).send({ message: 'Invalid user_id or friend_id' });
+			return;
+		}
 
 		try {
 			// Add friendship in both directions for a mutual friendship model
@@ -92,13 +96,14 @@ const addFriendship = async (req, reply) => {
 const removeFriendship = async (req, reply) => {
 	try {
 		const { userId, friendId } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
-		 if (userId === friendId) {
-			 reply.code(400).send({ message: 'Cannot remove yourself as a friend this way' });
-			 return;
-		 }
-
+		if (userId === friendId) {
+			reply.code(400).send({ message: 'Cannot remove yourself as a friend this way' });
+			return;
+		}
 
 		// Delete friendship in both directions
 		const result1 = db.prepare('DELETE FROM friends WHERE user_id = ? AND friend_id = ?').run(userId, friendId);

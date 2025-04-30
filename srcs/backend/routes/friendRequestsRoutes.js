@@ -110,7 +110,6 @@ const getReceivedFriendRequestsOpts = {
 	handler: getReceivedFriendRequests,
 };
 
-
 // Options for add Friend Request
 const addFriendRequestOpts = {
 	schema: {
@@ -130,13 +129,13 @@ const addFriendRequestOpts = {
 					message: { type: 'string' }
 				}
 			},
-			 409: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 500: {
+			409: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -157,39 +156,39 @@ const updateFriendRequestStatusOpts = {
 			},
 			required: ['id']
 		},
-		 body: {
+		body: {
 			type: 'object',
 			required: ['status'],
 			properties: {
 				status: { type: 'string', enum: ['accepted', 'rejected']},
 			}
-		 },
+		},
 		response: {
 			200: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 400: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 404: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
 				}
 			},
-			 409: { // For cases where friendship already exists on accept
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 500: {
+			400: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			404: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			409: { // For cases where friendship already exists on accept
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -218,12 +217,12 @@ const deleteFriendRequestOpts = {
 				},
 			},
 			404: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 500: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -234,9 +233,8 @@ const deleteFriendRequestOpts = {
 	handler: deleteFriendRequest,
 };
 
-
 function friendRequestsRoutes (fastify, options, done) {
-	// Get all friend requests (use with caution, potentially large)
+	// Get all friend requests
 	fastify.get('/friend-requests', getFriendRequestsOpts);
 
 	// Get single friend request by ID
@@ -247,7 +245,6 @@ function friendRequestsRoutes (fastify, options, done) {
 
 	// Get friend requests received by a user (pending)
 	fastify.get('/users/:userId/received-friend-requests', getReceivedFriendRequestsOpts);
-
 
 	// Add friend request
 	fastify.post('/friend-requests', addFriendRequestOpts);

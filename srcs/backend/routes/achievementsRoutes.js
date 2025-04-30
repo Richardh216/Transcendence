@@ -83,7 +83,6 @@ const getUserAchievementsOpts = {
 	handler: getUserAchievements,
 };
 
-
 // Options for add Achievement
 const addAchievementOpts = {
 	schema: {
@@ -107,7 +106,7 @@ const addAchievementOpts = {
 					message: { type: 'string' }
 				}
 			},
-			 500: {
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -128,7 +127,7 @@ const updateAchievementOpts = {
 			},
 			required: ['id']
 		},
-		 body: {
+		body: {
 			type: 'object',
 			properties: {
 				user_id: { type: 'integer'},
@@ -138,22 +137,22 @@ const updateAchievementOpts = {
 				completed: { type: 'integer'},
 				date_completed: { type: 'string'},
 			}
-		 },
+		},
 		response: {
 			200: Achievement,
-			 404: {
+			404: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
 				}
 			},
-			 400: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 500: {
+			400: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -182,12 +181,12 @@ const deleteAchievementOpts = {
 				},
 			},
 			404: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 500: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -197,7 +196,6 @@ const deleteAchievementOpts = {
 	},
 	handler: deleteAchievement,
 };
-
 
 function achievementsRoutes (fastify, options, done) {
 	// Get all achievements

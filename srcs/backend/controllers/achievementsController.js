@@ -1,5 +1,7 @@
 const getAchievements = async (req, reply) => {
 	try {
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 		const achievements = db.prepare('SELECT * FROM achievements').all();
 		reply.send(achievements);
@@ -12,6 +14,8 @@ const getAchievements = async (req, reply) => {
 const getAchievement = async (req, reply) => {
 	try {
 		const { id } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 		const achievement = db.prepare('SELECT * FROM achievements WHERE id = ?').get(id);
 
@@ -29,6 +33,8 @@ const getAchievement = async (req, reply) => {
 const getUserAchievements = async (req, reply) => {
 	try {
 		const { userId } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 		const achievements = db.prepare('SELECT * FROM achievements WHERE user_id = ?').all(userId);
 		reply.send(achievements);
@@ -41,11 +47,13 @@ const getUserAchievements = async (req, reply) => {
 const addAchievement = async (req, reply) => {
 	try {
 		const { user_id, name, description, icon, completed = 0, date_completed } = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		if (!user_id || !name || !description || !icon) {
-			 reply.code(400).send({ message: 'user_id, name, description, and icon are required' });
-			 return;
+			reply.code(400).send({ message: 'user_id, name, description, and icon are required' });
+			return;
 		}
 
 		// Optional: Check if user_id exists
@@ -68,8 +76,8 @@ const addAchievement = async (req, reply) => {
 			const newAchievement = db.prepare('SELECT * FROM achievements WHERE id = ?').get(newAchievementId);
 			reply.code(201).send(newAchievement);
 		} catch (err) {
-			 req.log.error(err);
-			 reply.code(500).send({ message: 'Error adding achievement', error: err.message });
+			req.log.error(err);
+			reply.code(500).send({ message: 'Error adding achievement', error: err.message });
 		}
 	} catch (error) {
 		req.log.error(error);
@@ -81,6 +89,8 @@ const updateAchievement = async (req, reply) => {
 	try {
 		const { id } = req.params;
 		const { user_id, name, description, icon, completed, date_completed } = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		let query = 'UPDATE achievements SET';
@@ -110,12 +120,12 @@ const updateAchievement = async (req, reply) => {
 		const resultRun = db.prepare(query).run(...params);
 
 		if (resultRun.changes === 0) {
-			 const achievementExists = db.prepare('SELECT id FROM achievements WHERE id = ?').get(id);
-			 if (!achievementExists) {
-				 reply.code(404).send({ message: 'Achievement not found' });
-			 } else {
-				 reply.code(200).send({ message: 'No changes made to achievement' });
-			 }
+			const achievementExists = db.prepare('SELECT id FROM achievements WHERE id = ?').get(id);
+			if (!achievementExists) {
+			 reply.code(404).send({ message: 'Achievement not found' });
+			} else {
+				reply.code(200).send({ message: 'No changes made to achievement' });
+			}
 		} else {
 			const updatedAchievement = db.prepare('SELECT * FROM achievements WHERE id = ?').get(id);
 			reply.send(updatedAchievement);
@@ -130,6 +140,8 @@ const updateAchievement = async (req, reply) => {
 const deleteAchievement = async (req, reply) => {
 	try {
 		const { id } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		const result = db.prepare('DELETE FROM achievements WHERE id = ?').run(id);
@@ -144,7 +156,6 @@ const deleteAchievement = async (req, reply) => {
 		reply.code(500).send({ message: 'Error deleting achievement' });
 	}
 };
-
 
 module.exports = {
 	getAchievements,

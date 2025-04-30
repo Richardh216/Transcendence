@@ -26,9 +26,8 @@ const ChatMessageDetails = {
 		receiver_username: { type: 'string' },
 		receiver_display_name: { type: 'string' },
 		receiver_avatar_url: { type: 'string' },
-	}
-}
-
+	},
+};
 
 module.exports = {
 	ChatMessage,

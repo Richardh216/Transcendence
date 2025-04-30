@@ -4,7 +4,7 @@ const FriendRequest = {
 		id: { type: 'integer' },
 		from_user_id: { type: 'integer' },
 		to_user_id: { type: 'integer' },
-		status: { type: 'string' }, // 'pending', 'accepted', 'rejected'
+		status: { type: 'string' }, // pending, accepted, or rejected
 		date: { type: 'string' },
 	},
 };
@@ -26,7 +26,6 @@ const FriendRequestDetails = {
 		to_avatar_url: { type: 'string' },
 	}
 }
-
 
 module.exports = {
 	FriendRequest,

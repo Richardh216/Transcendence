@@ -1,6 +1,8 @@
 const getUserGameSettings = async (req, reply) => {
 	try {
 		const { userId } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 		const settings = db.prepare('SELECT * FROM game_settings WHERE user_id = ?').get(userId);
 
@@ -26,6 +28,8 @@ const addGameSettings = async (req, reply) => {
 			sound_enabled = 1,
 			vibration_enabled = 1,
 		} = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		if (!user_id) {
@@ -33,13 +37,12 @@ const addGameSettings = async (req, reply) => {
 			 return;
 		}
 
-		 // Check if user exists
+		// Check if user exists
 		const userExists = db.prepare('SELECT id FROM users WHERE id = ?').get(user_id);
 		if (!userExists) {
-			 reply.code(404).send({ message: 'User not found' });
-			 return;
+			reply.code(404).send({ message: 'User not found' });
+			return;
 		}
-
 
 		try {
 			const result = db.prepare('INSERT INTO game_settings (user_id, board_color, paddle_color, ball_color, score_color, sound_enabled, vibration_enabled) VALUES (?, ?, ?, ?, ?, ?, ?)').run(user_id, board_color, paddle_color, ball_color, score_color, sound_enabled, vibration_enabled);
@@ -64,6 +67,8 @@ const updateGameSettings = async (req, reply) => {
 	try {
 		const { userId } = req.params;
 		const { board_color, paddle_color, ball_color, score_color, sound_enabled, vibration_enabled } = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		let query = 'UPDATE game_settings SET';
@@ -93,12 +98,12 @@ const updateGameSettings = async (req, reply) => {
 		const result = db.prepare(query).run(...params);
 
 		if (result.changes === 0) {
-			 const settingsExist = db.prepare('SELECT user_id FROM game_settings WHERE user_id = ?').get(userId);
-			 if (!settingsExist) {
-				  reply.code(404).send({ message: 'Game settings not found' });
-			 } else {
-				  reply.code(200).send({ message: 'No changes made to game settings' });
-			 }
+			const settingsExist = db.prepare('SELECT user_id FROM game_settings WHERE user_id = ?').get(userId);
+			if (!settingsExist) {
+				reply.code(404).send({ message: 'Game settings not found' });
+			} else {
+				reply.code(200).send({ message: 'No changes made to game settings' });
+			}
 		} else {
 			const updatedSettings = db.prepare('SELECT * FROM game_settings WHERE user_id = ?').get(userId);
 			reply.send(updatedSettings);

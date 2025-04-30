@@ -1,5 +1,7 @@
 const getMatchHistory = async (req, reply) => {
 	try {
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 		const history = db.prepare('SELECT * FROM match_history').all();
 		reply.send(history);
@@ -12,6 +14,8 @@ const getMatchHistory = async (req, reply) => {
 const getMatchHistoryItem = async (req, reply) => {
 	try {
 		const { id } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 		const item = db.prepare('SELECT * FROM match_history WHERE id = ?').get(id);
 
@@ -29,6 +33,8 @@ const getMatchHistoryItem = async (req, reply) => {
 const getMatchHistoryForUser = async (req, reply) => {
 	try {
 		const { userId } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 		const history = db.prepare('SELECT * FROM match_history WHERE user_id = ?').all(userId); // Assuming user_id is the primary user in the row
 		reply.send(history);
@@ -38,18 +44,19 @@ const getMatchHistoryForUser = async (req, reply) => {
 	}
 };
 
-
 const addMatchHistoryItem = async (req, reply) => {
 	try {
 		const { user_id, opponent_id, opponent_name, result, score, date, duration, game_mode } = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		if (!user_id || !opponent_id || !opponent_name || !result || !score || !date) {
-			 reply.code(400).send({ message: 'user_id, opponent_id, opponent_name, result, score, and date are required' });
-			 return;
+			reply.code(400).send({ message: 'user_id, opponent_id, opponent_name, result, score, and date are required' });
+			return;
 		}
 
-		 // Optional: Check if user_id and opponent_id exist in the users table
+		// Optional: Check if user_id and opponent_id exist in the users table
 		const userExists = db.prepare('SELECT id FROM users WHERE id = ?').get(user_id);
 		const opponentExists = db.prepare('SELECT id FROM users WHERE id = ?').get(opponent_id);
 
@@ -57,7 +64,7 @@ const addMatchHistoryItem = async (req, reply) => {
 			reply.code(400).send({ message: 'Invalid user_id' });
 			return;
 		}
-		 if (!opponentExists) {
+		if (!opponentExists) {
 			reply.code(400).send({ message: 'Invalid opponent_id' });
 			return;
 		}
@@ -82,6 +89,8 @@ const updateMatchHistoryItem = async (req, reply) => {
 	try {
 		const { id } = req.params;
 		const { user_id, opponent_id, opponent_name, result, score, date, duration, game_mode } = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		let query = 'UPDATE match_history SET';
@@ -131,6 +140,8 @@ const updateMatchHistoryItem = async (req, reply) => {
 const deleteMatchHistoryItem = async (req, reply) => {
 	try {
 		const { id } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		const result = db.prepare('DELETE FROM match_history WHERE id = ?').run(id);
@@ -145,7 +156,6 @@ const deleteMatchHistoryItem = async (req, reply) => {
 		reply.code(500).send({ message: 'Error deleting match history item' });
 	}
 };
-
 
 module.exports = {
 	getMatchHistory,

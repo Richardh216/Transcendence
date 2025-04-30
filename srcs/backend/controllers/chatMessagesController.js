@@ -1,6 +1,8 @@
 const getChatMessagesBetweenUsers = async (req, reply) => {
 	try {
 		const { userId1, userId2 } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		// Get messages sent from user1 to user2 OR user2 to user1, ordered by timestamp
@@ -35,6 +37,8 @@ const getChatMessagesBetweenUsers = async (req, reply) => {
 const getChatMessage = async (req, reply) => {
 	try {
 		const { id } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		 const message = db.prepare(`
@@ -57,7 +61,6 @@ const getChatMessage = async (req, reply) => {
 			WHERE cm.id = ?
 		`).get(id);
 
-
 		if (!message) {
 			reply.code(404).send({ message: 'Chat message not found' });
 		} else {
@@ -69,33 +72,32 @@ const getChatMessage = async (req, reply) => {
 	}
 };
 
-
 const addChatMessage = async (req, reply) => {
 	try {
 		const { sender_id, receiver_id, content } = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 		// timestamp defaults to CURRENT_TIMESTAMP in schema
 
 		if (!sender_id || !receiver_id || !content) {
-			 reply.code(400).send({ message: 'sender_id, receiver_id, and content are required' });
-			 return;
+			reply.code(400).send({ message: 'sender_id, receiver_id, and content are required' });
+			return;
 		}
 
-		 if (sender_id === receiver_id) {
-			  reply.code(400).send({ message: 'Cannot send message to yourself this way' });
-			  return;
-		 }
-
+		if (sender_id === receiver_id) {
+			reply.code(400).send({ message: 'Cannot send message to yourself this way' });
+			return;
+		}
 
 		// Check if users exist
 		const senderExists = db.prepare('SELECT id FROM users WHERE id = ?').get(sender_id);
 		const receiverExists = db.prepare('SELECT id FROM users WHERE id = ?').get(receiver_id);
 
 		if (!senderExists || !receiverExists) {
-			 reply.code(400).send({ message: 'Invalid sender_id or receiver_id' });
-			 return;
+			reply.code(400).send({ message: 'Invalid sender_id or receiver_id' });
+			return;
 		}
-
 
 		try {
 			const result = db.prepare('INSERT INTO chat_messages (sender_id, receiver_id, content) VALUES (?, ?, ?)').run(sender_id, receiver_id, content);
@@ -104,8 +106,8 @@ const addChatMessage = async (req, reply) => {
 			const newMessage = db.prepare('SELECT * FROM chat_messages WHERE id = ?').get(newMessageId);
 			reply.code(201).send(newMessage);
 		} catch (err) {
-			 req.log.error(err);
-			 reply.code(500).send({ message: 'Error adding chat message', error: err.message });
+			req.log.error(err);
+			reply.code(500).send({ message: 'Error adding chat message', error: err.message });
 		}
 	} catch (error) {
 		req.log.error(error);
@@ -113,10 +115,12 @@ const addChatMessage = async (req, reply) => {
 	}
 };
 
-// Optional: Mark message as read
+// Mark message as read
 const markChatMessageAsRead = async (req, reply) => {
 	try {
 		const { id } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		const result = db.prepare('UPDATE chat_messages SET read = 1 WHERE id = ?').run(id);
@@ -137,10 +141,11 @@ const markChatMessageAsRead = async (req, reply) => {
 	}
 };
 
-
 const deleteChatMessage = async (req, reply) => {
 	try {
 		const { id } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		const result = db.prepare('DELETE FROM chat_messages WHERE id = ?').run(id);
@@ -155,7 +160,6 @@ const deleteChatMessage = async (req, reply) => {
 		reply.code(500).send({ message: 'Error deleting chat message' });
 	}
 };
-
 
 module.exports = {
 	getChatMessagesBetweenUsers,

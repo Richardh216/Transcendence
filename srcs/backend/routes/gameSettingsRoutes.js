@@ -60,11 +60,11 @@ const addGameSettingsOpts = {
 				}
 			},
 			404: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
 			409: {
 				type: 'object',
 				properties: {
@@ -92,9 +92,9 @@ const updateGameSettingsOpts = {
 			},
 			required: ['userId']
 		},
-		 body: {
+		body: {
 			type: 'object',
-			 // None are strictly required for update
+			// None are strictly required for update
 			properties: {
 				board_color: { type: 'string'},
 				paddle_color: { type: 'string'},
@@ -103,16 +103,16 @@ const updateGameSettingsOpts = {
 				sound_enabled: { type: 'integer'},
 				vibration_enabled: { type: 'integer'},
 			}
-		 },
+		},
 		response: {
 			200: GameSetting,
 			400: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 404: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			404: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -129,7 +129,6 @@ const updateGameSettingsOpts = {
 	handler: updateGameSettings,
 };
 
-
 function gameSettingsRoutes (fastify, options, done) {
 	// Get user game settings by user ID
 	fastify.get('/users/:userId/settings', getUserGameSettingsOpts);
@@ -140,6 +139,7 @@ function gameSettingsRoutes (fastify, options, done) {
 	// Update game settings by user ID
 	fastify.put('/users/:userId/settings', updateGameSettingsOpts);
 
+	// Delete only when user is deleted
 	done();
 }
 

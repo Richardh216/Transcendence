@@ -64,7 +64,6 @@ const getChatMessageOpts = {
 	handler: getChatMessage,
 };
 
-
 // Options for add Chat Message
 const addChatMessageOpts = {
 	schema: {
@@ -85,7 +84,7 @@ const addChatMessageOpts = {
 					message: { type: 'string' }
 				}
 			},
-			 500: {
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -113,13 +112,13 @@ const markChatMessageAsReadOpts = {
 					message: {type: 'string'}
 				},
 			},
-			 404: {
+			404: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
 				}
 			},
-			 500: {
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -129,7 +128,6 @@ const markChatMessageAsReadOpts = {
 	},
 	handler: markChatMessageAsRead,
 };
-
 
 // Options for delete Chat Message
 const deleteChatMessageOpts = {
@@ -149,12 +147,12 @@ const deleteChatMessageOpts = {
 				},
 			},
 			404: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 500: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -164,7 +162,6 @@ const deleteChatMessageOpts = {
 	},
 	handler: deleteChatMessage,
 };
-
 
 function chatMessagesRoutes (fastify, options, done) {
 	// Get chat messages between two users
@@ -178,7 +175,6 @@ function chatMessagesRoutes (fastify, options, done) {
 
 	// Mark a chat message as read
 	fastify.put('/chat-messages/:id/read', markChatMessageAsReadOpts);
-
 
 	// Delete chat message
 	fastify.delete('/chat-messages/:id', deleteChatMessageOpts);

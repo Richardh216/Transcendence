@@ -46,10 +46,10 @@ const checkFriendshipOpts = {
 		},
 		response: {
 			200: {
-				 type: 'object',
-				 properties: {
-					 isFriend: { type: 'boolean' }
-				 }
+				type: 'object',
+				properties: {
+					isFriend: { type: 'boolean' }
+				}
 			},
 			500: {
 				type: 'object',
@@ -61,7 +61,6 @@ const checkFriendshipOpts = {
 	},
 	handler: checkFriendship,
 };
-
 
 // Options for add friendship
 const addFriendshipOpts = {
@@ -76,11 +75,11 @@ const addFriendshipOpts = {
 		},
 		response: {
 			201: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
 			400: {
 				type: 'object',
 				properties: {
@@ -93,7 +92,7 @@ const addFriendshipOpts = {
 					message: { type: 'string' }
 				}
 			},
-			 500: {
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -123,18 +122,18 @@ const removeFriendshipOpts = {
 				},
 			},
 			400: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
 			404: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 500: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -145,14 +144,12 @@ const removeFriendshipOpts = {
 	handler: removeFriendship,
 };
 
-
 function friendsRoutes (fastify, options, done) {
 	// Get friends for a specific user
 	fastify.get('/users/:userId/friends', getUserFriendsOpts);
 
 	// Check if two users are friends
 	fastify.get('/users/:userId/friends/:friendId', checkFriendshipOpts);
-
 
 	// Add friendship (requires user_id and friend_id in body)
 	fastify.post('/friends', addFriendshipOpts);

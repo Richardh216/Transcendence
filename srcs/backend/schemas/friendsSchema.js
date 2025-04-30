@@ -3,7 +3,6 @@ const Friend = {
 	properties: {
 		user_id: { type: 'integer' },
 		friend_id: { type: 'integer' },
-		// Note: We might join with the users table in controllers to return friend details
 	},
 };
 
@@ -21,7 +20,6 @@ const FriendDetails = {
 		// Add other user details for the friend as needed
 	}
 }
-
 
 module.exports = {
 	Friend,

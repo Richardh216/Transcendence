@@ -1,6 +1,8 @@
 const getUserStat = async (req, reply) => {
 	try {
 		const { userId } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 		const stat = db.prepare('SELECT * FROM user_stats WHERE user_id = ?').get(userId);
 
@@ -18,6 +20,8 @@ const getUserStat = async (req, reply) => {
 const addUserStat = async (req, reply) => {
 	try {
 		const { user_id, wins = 0, losses = 0, rank, level = 1 } = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		if (!user_id) {
@@ -28,10 +32,9 @@ const addUserStat = async (req, reply) => {
 		// Check if user exists
 		const userExists = db.prepare('SELECT id FROM users WHERE id = ?').get(user_id);
 		if (!userExists) {
-			 reply.code(404).send({ message: 'User not found' });
-			 return;
+			reply.code(404).send({ message: 'User not found' });
+			return;
 		}
-
 
 		try {
 			const result = db.prepare('INSERT INTO user_stats (user_id, wins, losses, rank, level) VALUES (?, ?, ?, ?, ?)').run(user_id, wins, losses, rank, level);
@@ -41,7 +44,7 @@ const addUserStat = async (req, reply) => {
 			if (err.message.includes('UNIQUE constraint failed')) {
 				reply.code(409).send({ message: 'User stats already exist for this user' });
 			} else if (err.message.includes('FOREIGN KEY constraint failed')) {
-				 reply.code(400).send({ message: 'Invalid user_id' });
+				reply.code(400).send({ message: 'Invalid user_id' });
 			}
 			else {
 				throw err;
@@ -57,6 +60,8 @@ const updateUserStat = async (req, reply) => {
 	try {
 		const { userId } = req.params;
 		const { wins, losses, rank, level } = req.body;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		// Build the update query dynamically based on provided fields
@@ -88,12 +93,12 @@ const updateUserStat = async (req, reply) => {
 
 		if (result.changes === 0) {
 			// Check if the user_id exists to distinguish 404 from no changes
-			 const userStatExists = db.prepare('SELECT user_id FROM user_stats WHERE user_id = ?').get(userId);
-			 if (!userStatExists) {
-				 reply.code(404).send({ message: 'User stats not found' });
-			 } else {
-				 reply.code(200).send({ message: 'No changes made to user stats' });
-			 }
+			const userStatExists = db.prepare('SELECT user_id FROM user_stats WHERE user_id = ?').get(userId);
+			if (!userStatExists) {
+				reply.code(404).send({ message: 'User stats not found' });
+			} else {
+				reply.code(200).send({ message: 'No changes made to user stats' });
+			}
 		} else {
 			const updatedStat = db.prepare('SELECT * FROM user_stats WHERE user_id = ?').get(userId);
 			reply.send(updatedStat);
@@ -108,6 +113,8 @@ const updateUserStat = async (req, reply) => {
 const deleteUserStat = async (req, reply) => {
 	try {
 		const { userId } = req.params;
+		// const db = req.server.betterSqlite3;
+		// const db = req.betterSqlite3;
 		const db = req.server.betterSqlite3;
 
 		const result = db.prepare('DELETE FROM user_stats WHERE user_id = ?').run(userId);

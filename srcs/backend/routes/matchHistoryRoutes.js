@@ -83,7 +83,6 @@ const getMatchHistoryForUserOpts = {
 	handler: getMatchHistoryForUser,
 };
 
-
 // Options for add Match History Item
 const addMatchHistoryItemOpts = {
 	schema: {
@@ -109,7 +108,7 @@ const addMatchHistoryItemOpts = {
 					message: { type: 'string' }
 				}
 			},
-			 500: {
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -130,7 +129,7 @@ const updateMatchHistoryItemOpts = {
 			},
 			required: ['id']
 		},
-		 body: {
+		body: {
 			type: 'object',
 			properties: {
 				user_id: { type: 'integer'},
@@ -142,7 +141,7 @@ const updateMatchHistoryItemOpts = {
 				duration: { type: 'string'},
 				game_mode: { type: 'string'},
 			}
-		 },
+		},
 		response: {
 			200: MatchHistoryItem,
 			 404: {
@@ -151,13 +150,13 @@ const updateMatchHistoryItemOpts = {
 					message: { type: 'string' }
 				}
 			},
-			 400: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 500: {
+			400: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -186,12 +185,12 @@ const deleteMatchHistoryItemOpts = {
 				},
 			},
 			404: {
-				 type: 'object',
-				 properties: {
-					 message: { type: 'string' }
-				 }
-			 },
-			 500: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' }
+				}
+			},
+			500: {
 				type: 'object',
 				properties: {
 					message: { type: 'string' }
@@ -201,7 +200,6 @@ const deleteMatchHistoryItemOpts = {
 	},
 	handler: deleteMatchHistoryItem,
 };
-
 
 function matchHistoryRoutes (fastify, options, done) {
 	// Get all match history
