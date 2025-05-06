@@ -1,12 +1,16 @@
 /*
 TODO: 
-	password not hashed yet! (use argon2?)
-	create login user function for safety
-	user updates might have some issues
-	friend request accepting has isses
+	password not hashed yet! (should be hashed correctly)
+	create login user function for safety (seems mostly functional)
+	user updates might have some issues (seems redundant)
+	friend request accepting has isses (seems fixed)
 	define generic error schema
 	implement stricter schema validation
-	create user authentication, no handlers for it yet
+	create user authentication, (mostyly working, needs frontend work)
+	include better err.message && checkig
+	test more and clean things up, implement notifications
+	TODO notes also in test.http
+	maybe make the DB be ignored by git?
 */
 
 const fastify = require('fastify')( {logger: true} );
@@ -45,6 +49,17 @@ try {
 // decorate fastify instance with db connection
 fastify.decorate('betterSqlite3', db);
 
+// create secret key (only need to run it once and copy the output and it's useable as the secret)
+const crypto = require('crypto');
+const jwtSecret = crypto.randomBytes(32).toString('hex');
+console.log("Generated JWT Secret:", jwtSecret);
+
+// adding JWT registration
+fastify.register(require('@fastify/jwt'), {
+	secret: 'notsurehowthisworksyet!', // should be a secure random key (stored in an ENV file)
+	// secret: process.env.JWT_SECRET, // like this (set env var while running the app)
+});
+
 fastify.register(require('./routes/userRoutes'));
 fastify.register(require('./routes/userStatsRoutes'));
 fastify.register(require('./routes/gameSettingsRoutes'));
@@ -53,6 +68,7 @@ fastify.register(require('./routes/achievementsRoutes'));
 fastify.register(require('./routes/friendsRoutes'));
 fastify.register(require('./routes/friendRequestsRoutes'));
 fastify.register(require('./routes/chatMessagesRoutes'));
+// fastify.register(require('./routes/notificationsRoutes')); // wip (add prehandler to notification routes)
 
 const PORT = process.env.PORT ||  3000;
 
