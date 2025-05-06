@@ -1,0 +1,243 @@
+/*
+TODO: 
+	password not hashed yet! (use argon2?)
+	create login user function for safety
+	user updates might have some issues
+	friend request accepting has isses
+	define generic error schema
+	implement stricter schema validation
+	create user authentication, no handlers for it yet
+*/
+
+const fastify = require('fastify')( {logger: true} );
+const fs = require('fs'); //optional
+const path = require('path'); //optional
+const Database = require('better-sqlite3');
+
+const dbDir = path.resolve(__dirname, './db');
+
+if (!fs.existsSync(dbDir)) {
+	console.log('Setting up dbDir!');
+	fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const dbFilePath = path.resolve(dbDir, 'mydb.sqlite'); // Store the resolved path
+console.log(`Attempting to use database file at: ${dbFilePath}`);
+
+// Create the database instance directly and globally accessible
+let db; // Use 'let' so it can be assigned
+try {
+	db = new Database(dbFilePath);
+	console.log("Database is correctly running in file-backed mode."); // debugging log
+	if (db.memory) {
+		console.error("CRITICAL ERROR: Database is running IN-MEMORY despite file path being provided!");
+		process.exit(1); // Exit if it's unexpectedly in-memory
+	}
+
+	db.exec('PRAGMA foreign_keys = ON;'); // should be on by default
+	db.exec('PRAGMA journal_mode = DELETE;');
+	db.exec('PRAGMA synchronous = FULL;');
+} catch (err) {
+	console.error(`Error opening database at ${dbFilePath}:`, err);
+	process.exit(1); // Exit if database connection fails
+}
+
+// decorate fastify instance with db connection
+fastify.decorate('betterSqlite3', db);
+
+fastify.register(require('./routes/userRoutes'));
+fastify.register(require('./routes/userStatsRoutes'));
+fastify.register(require('./routes/gameSettingsRoutes'));
+fastify.register(require('./routes/matchHistoryRoutes'));
+fastify.register(require('./routes/achievementsRoutes'));
+fastify.register(require('./routes/friendsRoutes'));
+fastify.register(require('./routes/friendRequestsRoutes'));
+fastify.register(require('./routes/chatMessagesRoutes'));
+
+const PORT = process.env.PORT ||  3000;
+
+// This hook runs after plugins are registered
+fastify.after((err) => {
+	if (err) console.error(err);
+
+	try {
+		db.exec(`
+			CREATE TABLE IF NOT EXISTS users (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			username TEXT NOT NULL UNIQUE,
+			password TEXT NOT NULL,
+			display_name TEXT NOT NULL,
+			email TEXT UNIQUE,
+			bio TEXT,
+			avatar_url TEXT,
+			cover_photo_url TEXT,
+			join_date TEXT,
+			has_two_factor_auth INTEGER DEFAULT 0,
+			status TEXT DEFAULT 'offline',
+			last_active TEXT,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			);
+
+			CREATE TABLE IF NOT EXISTS user_stats (
+			user_id INTEGER PRIMARY KEY,
+			wins INTEGER DEFAULT 0,
+			losses INTEGER DEFAULT 0,
+			rank TEXT,
+			level INTEGER DEFAULT 1,
+			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+			);
+
+			CREATE TABLE IF NOT EXISTS game_settings (
+			user_id INTEGER PRIMARY KEY,
+			board_color TEXT DEFAULT '#000000',
+			paddle_color TEXT DEFAULT '#FFFFFF',
+			ball_color TEXT DEFAULT '#FFFFFF',
+			score_color TEXT DEFAULT '#FFFFFF',
+			sound_enabled INTEGER DEFAULT 1,
+			vibration_enabled INTEGER DEFAULT 1,
+			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+			);
+
+			CREATE TABLE IF NOT EXISTS match_history (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			opponent_id INTEGER NOT NULL,
+			opponent_name TEXT NOT NULL,
+			result TEXT NOT NULL CHECK(result IN ('win', 'loss', 'draw')),
+			score TEXT NOT NULL,
+			date TEXT NOT NULL,
+			duration TEXT,
+			game_mode TEXT,
+			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+			);
+
+			CREATE TABLE IF NOT EXISTS achievements (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			name TEXT NOT NULL,
+			description TEXT NOT NULL,
+			icon TEXT NOT NULL,
+			completed INTEGER DEFAULT 0,
+			date_completed TEXT,
+			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+			);
+
+			CREATE TABLE IF NOT EXISTS friends (
+			user_id INTEGER NOT NULL,
+			friend_id INTEGER NOT NULL,
+			PRIMARY KEY (user_id, friend_id),
+			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+			FOREIGN KEY (friend_id) REFERENCES users (id) ON DELETE CASCADE
+			);
+
+			CREATE TABLE IF NOT EXISTS friend_requests (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			from_user_id INTEGER NOT NULL,
+			to_user_id INTEGER NOT NULL,
+			status TEXT NOT NULL CHECK(status IN ('pending', 'accepted', 'rejected')),
+			date TEXT NOT NULL,
+			FOREIGN KEY (from_user_id) REFERENCES users (id) ON DELETE CASCADE,
+			FOREIGN KEY (to_user_id) REFERENCES users (id) ON DELETE CASCADE
+			);
+
+			CREATE TABLE IF NOT EXISTS chat_messages (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			sender_id INTEGER NOT NULL,
+			receiver_id INTEGER NOT NULL,
+			content TEXT NOT NULL,
+			timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+			read INTEGER DEFAULT 0,
+			FOREIGN KEY (sender_id) REFERENCES users (id) ON DELETE CASCADE,
+			FOREIGN KEY (receiver_id) REFERENCES users (id) ON DELETE CASCADE
+			);
+
+			CREATE TABLE IF NOT EXISTS notifications (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			type TEXT NOT NULL CHECK(type IN ('friendRequest', 'gameInvite', 'achievement', 'system')),
+			message TEXT NOT NULL,
+			read INTEGER DEFAULT 0,
+			timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+			action_url TEXT,
+			related_user_id INTEGER,
+			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+			FOREIGN KEY (related_user_id) REFERENCES users (id) ON DELETE SET NULL
+			);
+		`);
+		fastify.log.info('Database initialized (tables checked/created).');
+		console.log('Database connection appears successful.');
+	} catch(dbERR) {
+		fastify.log.error('Database initialization failed: ', dbERR);
+		process.exit(1);
+	}
+});
+
+// Register the database close logic with Fastify's onClose hook
+fastify.addHook('onClose', (instance, done) => {
+	console.log('Fastify shutting down, closing database connection...');
+	const db = instance.betterSqlite3; // Access the db instance
+	if (db && typeof db.close === 'function') {
+		try {
+			db.close();
+			console.log('Database connection closed cleanly.');
+			done(); // Signal the hook is complete
+		} catch (closeErr) {
+			console.error('Error closing database connection:', closeErr);
+			done(closeErr); // Signal hook complete with error
+		}
+	} else {
+		console.warn('Database instance not found or cannot be closed on shutdown.');
+		done(); // Nothing to close
+	}
+});
+
+// These handlers will catch signals like Ctrl+C and explicitly call fastify.close()
+process.on('SIGINT', () => { // SIGINT is Ctrl+C
+	console.log('SIGINT received, ensuring database connection is closed directly...'); // Log this
+	const db = fastify.betterSqlite3; // Access the db instance
+	if (db && typeof db.close === 'function') {
+		try {
+			 db.close(); // Close the connection synchronously
+			 console.log('Database connection closed cleanly directly from SIGINT handler.'); // Log this
+		} catch (closeErr) {
+			 console.error('Error closing database connection directly from SIGINT handler:', closeErr); // Log this
+		}
+	} else {
+		console.warn('Database instance not found for final close attempt in SIGINT handler.'); // Log this
+	}
+	process.exit(0); // Exit cleanly
+});
+
+process.on('SIGTERM', () => { // SIGTERM is sent by process managers like Docker, PM2
+	console.log('SIGTERM received, ensuring database connection is closed directly...'); // Log this
+	const db = fastify.betterSqlite3;
+	if (db && typeof db.close === 'function') {
+		try {
+			db.close();
+			console.log('Database connection closed cleanly directly from SIGTERM handler.');
+		} catch (closeErr) {
+			console.error('Error closing database connection directly from SIGTERM handler:', closeErr);
+		}
+	} else {
+		console.warn('Database instance not found for final close attempt in SIGTERM handler.');
+	}
+	process.exit(0);
+});
+
+const start = async() => {
+	try {
+		// Wait for 'after' hook
+		await fastify.ready();
+
+		await fastify.listen({ port: PORT, host: '0.0.0.0' });
+
+		// Log listening addresses after server starts
+		console.log(`Server listening on ${PORT}`);
+		console.log('Server listening at', fastify.addresses());
+	} catch(error) {
+		fastify.log.error('Error starting server:', error);
+		process.exit(1);
+	}
+};
+
+start();
