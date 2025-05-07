@@ -1,22 +1,11 @@
 /*
 TODO: 
-	password not hashed yet! (should be hashed correctly)
-	create login user function for safety (seems mostly functional)
-	user updates might have some issues (seems redundant)
-	friend request accepting has isses (seems fixed)
 	define generic error schema
 	implement stricter schema validation
-	create user authentication, (mostyly working, needs more implementations in user, needs frontend work)
-	Authorization Check - ADD ALSO IN updateUserProfile and deleteUser!
-	include better err.message && checkig
-	test more and clean things up
-	implement notifications (done-ish)
-	TODO notes also in test.http
+	create user authentication done, (needs frontend work)
 	maybe make the DB be ignored by git?
-	change user status after logging in
 	implement log out function (or maybe frontend has to do it?)
-	implement prefix to other groups!
-	test notifications more!
+	update user stats logic && gameSettings logic
 	make .js into .ts?
 */
 
@@ -57,7 +46,7 @@ try {
 fastify.decorate('betterSqlite3', db);
 
 // create secret key (only need to run it once and copy the output and it's useable as the secret)
-const crypto = require('crypto');
+const crypto = require('crypto'); // built into node.js
 const jwtSecret = crypto.randomBytes(32).toString('hex');
 console.log("Generated JWT Secret:", jwtSecret); //not used yet
 
@@ -67,18 +56,17 @@ fastify.register(require('@fastify/jwt'), {
 	// secret: process.env.JWT_SECRET, // like this (set env var while running the app)
 });
 
-//prefix other routes!
-fastify.register(require('./routes/userRoutes'));
-fastify.register(require('./routes/userStatsRoutes'));
-fastify.register(require('./routes/gameSettingsRoutes'));
-fastify.register(require('./routes/matchHistoryRoutes'));
-fastify.register(require('./routes/achievementsRoutes'));
-fastify.register(require('./routes/friendsRoutes'));
-fastify.register(require('./routes/friendRequestsRoutes'));
-fastify.register(require('./routes/chatMessagesRoutes'));
+fastify.register(require('./routes/userRoutes'), { prefix: '/api/users' });
+fastify.register(require('./routes/userStatsRoutes'), { prefix: 'api/users/stats' });
+fastify.register(require('./routes/gameSettingsRoutes'), { prefix: '/api/game-settings' });
+fastify.register(require('./routes/matchHistoryRoutes'), { prefix: '/api/match-history' });
+fastify.register(require('./routes/achievementsRoutes'), { prefix: '/api/achievements' });
+fastify.register(require('./routes/friendsRoutes'), { prefix: '/api/friends' });
+fastify.register(require('./routes/friendRequestsRoutes'), { prefix: '/api/friend-requests' });
+fastify.register(require('./routes/chatMessagesRoutes'), { prefix: 'api/chat-messages' });
 fastify.register(require('./routes/notificationsRoutes'), { prefix: '/api/notifications' }); // wip (add prehandler to notification routes)
 
-const PORT = process.env.PORT ||  3000;
+const PORT = process.env.PORT || 3000;
 
 // This hook runs after plugins are registered
 fastify.after((err) => {
