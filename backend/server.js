@@ -1,7 +1,8 @@
 /*
 TODO: 
-	define generic error schema
+	define generic error schema (done, needs more testing, but should be fine)
 	implement stricter schema validation
+	add authentication to many schemas maybe (add forbidden(when in controllers) and unauth errors(ALWAYS) to protected schemas)
 	maybe make the DB be ignored by git?
 	implement login/out functions done. frontend has to do the rest, with JWT
 	update user stats logic && gameSettings logic (maybe)
@@ -12,6 +13,7 @@ const fastify = require('fastify')( {logger: true} );
 const fs = require('fs'); //optional
 const path = require('path'); //optional
 const Database = require('better-sqlite3');
+const jwt = require('@fastify/jwt');
 
 const dbDir = path.resolve(__dirname, './db');
 
@@ -50,9 +52,24 @@ const jwtSecret = crypto.randomBytes(32).toString('hex');
 console.log("Generated JWT Secret:", jwtSecret); //not used yet
 
 // adding JWT registration
-fastify.register(require('@fastify/jwt'), {
-	secret: 'notsurehowthisworksyet!', // should be a secure random key (stored in an ENV file) (for testing for now)
-	// secret: process.env.JWT_SECRET, // like this (set env var while running the app)
+fastify.register(jwt, {
+	secret: 'notsurehowthisworksyet!', // should be a secure random key (for testing for now)
+	// secret: jwtSecret, // like this?
+});
+
+const cors = require('@fastify/cors');
+
+// register CORS
+fastify.register(cors, {
+	origin: 'http://localhost:8080',
+	// origin: 'http://localhost:3000 //dev
+
+	// Optionally allow requests from multiple specific origins
+	// origin: ['http://localhost:8080', 'https://your-production-frontend.com'],
+
+	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], // Specify allowed methods
+	allowedHeaders: ['Origin', 'X-Requested-With', 'Accept', 'Content-Type', 'Authorization'], // Specify allowed headers
+	credentials: true //for authorization headers
 });
 
 fastify.register(require('./routes/userRoutes'), { prefix: '/api/users' });

@@ -1,3 +1,26 @@
+// import axios from 'axios';
+
+// const api = axios.create({
+// 	baseURL: 'http://localhost:3000/api',
+// 	headers: { 'Content-Type': 'application/json' },
+// });
+
+// // Add request interceptor for JWT
+// api.interceptors.request.use(config => {
+//     const token = localStorage.getItem('authToken'); // Or wherever the token is gonna be
+//     if (token) {
+//         config.headers['Authorization'] = `Bearer ${token}`;
+//     }
+//     return config;
+// }, error => {
+//     return Promise.reject(error);
+// });
+
+// // Add response interceptor for 401
+// // api.interceptors.response.use(...)
+
+// export default api; // (all this can be exported as api from an api.ts file or something)
+
 import { 
     UserProfile,
     ChatMessage, 
@@ -35,9 +58,29 @@ export function findUserByEmail(email: string): UserProfile | undefined {
     );
 }
 
+// OLD ONE WITH MOCK DATA
 export function getUserById(id: number): UserProfile | undefined {
     return mockUsers.find(user => user.id === id);
 }
+
+// New Function using backed API
+// export async function getUserById(id: number): Promise<UserProfile | undefined> {
+// 	try {
+// 		// Make GET request to backend endpoint
+// 		const response = await api.get(`/users/${id}`);
+// 		// If successful, return the data from the backend response
+// 		// Axios puts the response body in response.data
+// 		return response.data as UserProfile; // Cast to frontend UserProfile type
+// 	} catch (error) {
+// 		console.error(`Failed to fetch user with ID ${id}:`, error);
+// 		// Handle specific error responses
+// 		if (axios.isAxiosError(error) && error.response?.status === 404) {
+// 			console.warn('User not found.');
+// 			return undefined; // We can return undefined or throw a specific error
+// 		}
+// 		throw error;
+// 	}
+// }
 
 export function createUser(userData: Partial<UserProfile>): UserProfile {
     const newUser: UserProfile = {
@@ -306,6 +349,35 @@ export function sendFriendRequest(fromUserId: number, toUserId: number): boolean
     return true;
 }
 
+// export async function sendFriendRequest(fromUserId: number, toUserId: number): Promise<boolean> {
+//     try {
+//         // This endpoint should be protected. The backend should get the sender ID from req.user.id
+//         // and verify it matches fromUserId if that's sent in the body, or ignore fromUserId in body and use req.user.id directly.
+//         // Let's assume the backend uses req.user.id and only needs toUserId in the body.
+//         const response = await api.post('/api/friend-requests', { // Assuming POST method and this path
+//             to_user_id: toUserId, // Use snake_case if that's what backend expects
+//             // from_user_id is obtained from the token on the backend
+//         });
+
+//         // We expect the backend to return a success status (e.g., 201 Created or 200 OK)
+//         // The backend should also handle creating the notification for the recipient.
+//         console.log(`Friend request sent from (auth user) to user ${toUserId}. Backend response:`, response.data);
+//         return response.status === 201 || response.status === 200;
+
+//     } catch (error) {
+//         console.error(`Failed to send friend request to user ${toUserId}:`, error);
+//         // Handle specific backend errors:
+//         // 401 (interceptor)
+//         // 400 (invalid to_user_id, or trying to add self/already friends)
+//         // 409 (request already pending)
+//         if (axios.isAxiosError(error) && error.response) {
+//              console.error('Backend error sending friend request:', error.response.status, error.response.data);
+//              throw new Error(error.response.data.message || `Backend error: ${error.response.status}`);
+//         }
+//         throw error; // Re-throw other errors
+//     }
+// }
+
 // Function to accept a friend request
 export function acceptFriendRequest(userId: number, requestId: number): boolean {
     const user = getUserById(userId);
@@ -342,6 +414,35 @@ export function acceptFriendRequest(userId: number, requestId: number): boolean 
     return true;
 }
 
+// export async function acceptFriendRequest(userId: number, requestId: number): Promise<boolean> {
+//     try {
+//         // This endpoint must be protected. The backend needs to verify that the request ID
+//         // corresponds to a request SENT TO the authenticated user (req.user.id).
+//         // We send the request ID in the URL params and the new status in the body.
+//         const response = await api.put(`/api/friend-requests/status/${requestId}`, { // Assuming PUT method and this path/params
+//             status: 'accepted', // Send the desired status
+//             // No need to send userId in body if backend uses req.user.id
+//         });
+
+//         // We expect the backend to return a success status (e.g., 200 OK or 204 No Content)
+//         // The backend should also handle adding friends to both users and creating the notification.
+//          console.log(`Friend request ${requestId} accepted by (auth user). Backend response:`, response.data);
+//         return response.status === 200 || response.status === 204;
+
+//     } catch (error) {
+//         console.error(`Failed to accept friend request ${requestId} for user ID ${userId}:`, error);
+//         // Handle specific backend errors:
+//         // 401 (interceptor)
+//         // 403 (if backend auth check failed - trying to accept a request not sent to them)
+//         // 404 (request ID not found or not pending)
+//         if (axios.isAxiosError(error) && error.response) {
+//              console.error('Backend error accepting friend request:', error.response.status, error.response.data);
+//              throw new Error(error.response.data.message || `Backend error: ${error.response.status}`);
+//         }
+//         throw error; // Re-throw other errors
+//     }
+// }
+
 // ===== Game Management =====
 
 // Game invite functions
@@ -374,6 +475,35 @@ export function sendGameInvite(fromUserId: number, toUserId: number, gameMode: s
     
     return true;
 }
+
+// export async function sendGameInvite(fromUserId: number, toUserId: number, gameMode: string = 'classic'): Promise<boolean> {
+//     try {
+//         // This endpoint should be protected. The backend should get the sender ID from req.user.id
+//         // and use it as the 'from' user, and only need toUserId and gameMode in the body.
+//         const response = await api.post('/api/game-invites', { // Assuming POST method and this path
+//             to_user_id: toUserId, // Use snake_case
+//             game_mode: gameMode,   // Use snake_case
+//             // from_user_id is obtained from the token on the backend
+//         });
+
+//         // We expect the backend to return a success status (e.g., 201 Created or 200 OK)
+//         // The backend should also handle creating the notification for the recipient.
+//         console.log(`Game invite sent from (auth user) to user ${toUserId}. Backend response:`, response.data);
+//         return response.status === 201 || response.status === 200;
+
+//     } catch (error) {
+//         console.error(`Failed to send game invite to user ${toUserId}:`, error);
+//         // Handle specific backend errors:
+//         // 401 (interceptor)
+//         // 400 (invalid to_user_id, or trying to invite self/already in game)
+//         // 409 (invite already pending)
+//         if (axios.isAxiosError(error) && error.response) {
+//              console.error('Backend error sending game invite:', error.response.status, error.response.data);
+//              throw new Error(error.response.data.message || `Backend error: ${error.response.status}`);
+//         }
+//         throw error; // Re-throw other errors
+//     }
+// }
 
 // ===== Leaderboard Functions =====
 
@@ -446,3 +576,28 @@ export function resetUserStats(userId: number): boolean {
     
     return true;
 }
+
+// export async function resetUserStats(userId: number): Promise<boolean> {
+//     try {
+//         // This endpoint must be protected. The backend needs to verify
+//         // req.user.id matches the userId from params.
+//         // Assuming a DELETE method is appropriate for removing stats
+//         const response = await api.delete(`/api/users/stats/${userId}`); // Assuming DELETE method and this path
+
+//         // We expect the backend to return a success status (e.g., 200 OK or 204 No Content)
+//          console.log(`Stats reset for user ID ${userId}. Backend response:`, response.data);
+//         return response.status === 200 || response.status === 204;
+
+//     } catch (error) {
+//         console.error(`Failed to reset stats for user ID ${userId}:`, error);
+//          // Handle specific backend errors:
+//         // 401 (interceptor)
+//         // 403 (if backend auth check failed - trying to reset another user's stats)
+//         // 404 (user/stats not found - less likely if auth check passes)
+//         if (axios.isAxiosError(error) && error.response) {
+//              console.error('Backend error resetting stats:', error.response.status, error.response.data);
+//              throw new Error(error.response.data.message || `Backend error: ${error.response.status}`);
+//         }
+//         throw error; // Re-throw other errors
+//     }
+// }
