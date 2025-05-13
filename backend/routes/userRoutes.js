@@ -1,24 +1,38 @@
 const {
 	getUsers,
+	getCurrentUser,
 	getUser,
+	getUserByName,
+	getUserByEmail,
 	addUser,
 	deleteUser,
 	updateUser,
 	getUserProfile,
 	updateUserProfile,
 	loginUser,
-	logoutUser
+	logoutUser,
+	uploadAvatar
 } = require('../controllers/userController');
 
 const {
 	BasicErrorSchema,
 	ValidationErrorSchema,
 	UnauthorizedErrorSchema,
+	ForbiddenErrorSchema,
 } = require('../schemas/errorSchema');
 
 const { User, loginBody, loginResponse } = require('../schemas/userSchema');
 
 const authPreHandler = require('./authPreHandlerRoutes');
+
+const normalizeEmail = async (req, reply) => {
+	if (req.body && req.body.email) {
+		req.body.email = req.body.email.toLowerCase();
+	}
+	if (req.params && req.params.email) {
+		req.params.email = req.params.email.toLowerCase();
+	}
+};
 
 // Options for get all Users, not sure if it should be protected with auth
 const getUsersOpts = {
@@ -34,8 +48,25 @@ const getUsersOpts = {
 	handler: getUsers
 };
 
-const getUserOpts = {
+const getCurrentUserOpts = {
 	preHandler: [authPreHandler],
+	schema: {
+		params: {
+			type: 'object'
+		},
+		response: {
+			200: User,
+			404: BasicErrorSchema,
+			400: ValidationErrorSchema,
+			401: UnauthorizedErrorSchema,
+			500: BasicErrorSchema
+		}
+	},
+	handler: getCurrentUser
+};
+
+const getUserOpts = {
+	// preHandler: [authPreHandler],
 	schema: {
 		params: {
 			type: 'object',
@@ -52,6 +83,47 @@ const getUserOpts = {
 		}
 	},
 	handler: getUser
+};
+
+const getUserByNameOpts = {
+	// preHandler: [authPreHandler],
+	schema: {
+		params: {
+			type: 'object',
+			properties: {
+				username: { type: 'string' }
+			},
+			required: ['username']
+		},
+		response: {
+			200: User,
+			404: BasicErrorSchema,
+			400: ValidationErrorSchema,
+			500: BasicErrorSchema
+		}
+	},
+	handler: getUserByName
+};
+
+const getUserByEmailOpts = {
+	// preHandler: [authPreHandler],
+	preHandler: [normalizeEmail],
+	schema: {
+		params: {
+			type: 'object',
+			properties: {
+				email: { type: 'string' }
+			},
+			required: ['email']
+		},
+		response: {
+			200: User,
+			404: BasicErrorSchema,
+			400: ValidationErrorSchema,
+			500: BasicErrorSchema
+		}
+	},
+	handler: getUserByEmail
 };
 
 const getUserProfileOpts = { //not sure if this should be protected with auth
@@ -74,6 +146,7 @@ const getUserProfileOpts = { //not sure if this should be protected with auth
 };
 
 const postUserOpts = {
+	preHandler: [normalizeEmail],
 	schema: {
 		body: {
 			type: 'object',
@@ -212,12 +285,48 @@ const logoutUserOpts = {
 	handler: logoutUser,
 };
 
+const uploadAvatarOpts = {
+	preHandler: [authPreHandler],
+	schema: {
+		params: {
+			type: 'object',
+			properties: {
+				userId: { type: 'integer', minimum: 1 }
+			},
+			required: ['userId']
+		},
+		response: {
+			200: {
+				type: 'object',
+				properties: {
+					message: { type: 'string' },
+					avatar_url: { type: 'string', format: 'uri-reference' } // Return the new URL
+				},
+				required: ['message', 'avatar_url']
+			},
+			400: BasicErrorSchema,
+			401: UnauthorizedErrorSchema,
+			403: ForbiddenErrorSchema,
+			404: BasicErrorSchema,
+			413: BasicErrorSchema,
+			415: BasicErrorSchema,
+			500: BasicErrorSchema
+		}
+	},
+	handler: uploadAvatar,
+};
+
 function userRoutes(fastify, options, done) {
 	// Get all Users (verify if auth is needed)
 	fastify.get('/', getUsersOpts);
 
-	// Get single User - Protected
+	// Get current User - Private
+	fastify.get('/current', getCurrentUserOpts);
+
+	// Get single User - Public
 	fastify.get('/:id', getUserOpts);
+	fastify.get('/byname/:username', getUserByNameOpts);
+	fastify.get('/byemail/:email', getUserByEmailOpts);
 
 	// Get user profile (same as getUser but might include more data in future) - (verify if auth is needed)
 	fastify.get('/:id/profile', getUserProfileOpts);
@@ -236,6 +345,9 @@ function userRoutes(fastify, options, done) {
 
 	// Update User Profile (partial update) - Protected, make sure only authenticated user's data can be updated
 	fastify.patch('/:id/profile', updateUserProfileOpts);
+
+	// Upload Avatar - Protected + Authorized
+	fastify.put('/:userId/avatar', uploadAvatarOpts);
 
 	// Delete User - protected, should only delete authenticated user's account
 	fastify.delete('/:id', deleteUserOpts);

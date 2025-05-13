@@ -1,11 +1,11 @@
 /*
 TODO: 
-	define generic error schema (done, needs more testing, but should be fine)
-	implement stricter schema validation
 	add authentication to many schemas maybe (add forbidden(when in controllers) and unauth errors(ALWAYS) to protected schemas)
 	maybe make the DB be ignored by git?
-	implement login/out functions done. frontend has to do the rest, with JWT
 	update user stats logic && gameSettings logic (maybe)
+	figure out how to make http into https
+	google sign in and 2FA look into
+	test tournament more
 	make .js into .ts?
 */
 
@@ -14,6 +14,8 @@ const fs = require('fs'); //optional
 const path = require('path'); //optional
 const Database = require('better-sqlite3');
 const jwt = require('@fastify/jwt');
+const fastifyMultipart = require('@fastify/multipart');
+const fastifyStatic = require('@fastify/static');
 
 const dbDir = path.resolve(__dirname, './db');
 
@@ -46,6 +48,24 @@ try {
 // decorate fastify instance with db connection
 fastify.decorate('betterSqlite3', db);
 
+fastify.register(fastifyMultipart, {
+	limits: {
+		fileSize: 10 * 1024 * 1024, // max 10 MB to upload
+		files: 1 // max 1 file to upload
+	}
+});
+
+const UPLOAD_DIR = path.join(__dirname, './uploads');
+if (!fs.existsSync(UPLOAD_DIR)) {
+	fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+fastify.register(fastifyStatic, {
+	root: UPLOAD_DIR,
+	prefix: '/uploads/', // /uploads url
+	immutable: true,
+});
+
 // create secret key (only need to run it once and copy the output and it's useable as the secret)
 const crypto = require('crypto'); // built into node.js
 const jwtSecret = crypto.randomBytes(32).toString('hex');
@@ -61,7 +81,8 @@ const cors = require('@fastify/cors');
 
 // register CORS
 fastify.register(cors, {
-	origin: 'http://localhost:8080',
+	origin: ['http://127.0.0.1:8080', 'http://localhost:8080', 'http://10.12.5.1:8080'], //temporary solution. we might have to setup a proxy in frontend to forwards api requests through the docker network
+	// origin: 'http://localhost:8080',
 	// origin: 'http://localhost:3000 //dev
 
 	// Optionally allow requests from multiple specific origins
@@ -80,7 +101,8 @@ fastify.register(require('./routes/achievementsRoutes'), { prefix: '/api/achieve
 fastify.register(require('./routes/friendsRoutes'), { prefix: '/api/friends' });
 fastify.register(require('./routes/friendRequestsRoutes'), { prefix: '/api/friend-requests' });
 fastify.register(require('./routes/chatMessagesRoutes'), { prefix: 'api/chat-messages' });
-fastify.register(require('./routes/notificationsRoutes'), { prefix: '/api/notifications' }); // wip (add prehandler to notification routes)
+fastify.register(require('./routes/notificationsRoutes'), { prefix: '/api/notifications' });
+fastify.register(require('./routes/tournamentRoutes'), { prefix: '/api/tournament' });
 
 const PORT = process.env.PORT || 3000;
 
@@ -121,8 +143,6 @@ fastify.after((err) => {
 			paddle_color TEXT DEFAULT '#FFFFFF',
 			ball_color TEXT DEFAULT '#FFFFFF',
 			score_color TEXT DEFAULT '#FFFFFF',
-			sound_enabled INTEGER DEFAULT 1,
-			vibration_enabled INTEGER DEFAULT 1,
 			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 			);
 
@@ -136,7 +156,11 @@ fastify.after((err) => {
 			date TEXT NOT NULL,
 			duration TEXT,
 			game_mode TEXT,
+			status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'running', 'finished')),
+			tournament_id INTEGER,
 			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+			FOREIGN KEY (opponent_id) REFERENCES users (id) ON DELETE CASCADE,
+			FOREIGN KEY (tournament_id) REFERENCES tournaments (id) ON DELETE SET NULL
 			);
 
 			CREATE TABLE IF NOT EXISTS achievements (
@@ -190,6 +214,25 @@ fastify.after((err) => {
 			related_user_id INTEGER,
 			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
 			FOREIGN KEY (related_user_id) REFERENCES users (id) ON DELETE SET NULL
+			);
+
+			CREATE TABLE IF NOT EXISTS tournaments (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			tournament_name TEXT NOT NULL,
+			player_amount INTEGER NOT NULL,
+			status TEXT NOT NULL CHECK(status IN ('pending', 'running', 'finished')),
+			start_date TEXT NOT NULL,
+			end_date TEXT,
+			winner_user_id INTEGER,
+			FOREIGN KEY (winner_user_id) REFERENCES users (id) ON DELETE SET NULL
+			);
+
+			CREATE TABLE IF NOT EXISTS tournaments_players (
+			tournament_id INTEGER NOT NULL,
+			player_id INTEGER NOT NULL,
+			PRIMARY KEY (tournament_id, player_id),
+			FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE,
+			FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE
 			);
 		`);
 		fastify.log.info('Database initialized (tables checked/created).');

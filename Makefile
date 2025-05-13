@@ -28,7 +28,13 @@ start_containers:
 frontend_dev:
 	@echo "Building frontend..."
 	@echo "Starting frontend development server..."
-	cd frontend && npm run build && npm run serve:local
+	cd frontend && npm install && npm run build && npm run serve:local
+
+# Backend development commands
+backend_dev:
+	@echo "Building backend..."
+	@echo "Starting backend development server..."
+	cd backend && npm install && node server
 
 # Stop and remove containers (keep volumes)
 down: start_docker
@@ -50,6 +56,11 @@ re: fclean all
 ps: start_docker
 	@docker-compose -f $(NAME) ps
 
+# Delete DataBase
+db:
+	@echo "Removing database..."
+	rm -rf backend/db
+
 # Container logs for each service
 logs_frontend: start_docker
 	@docker-compose -f $(NAME) logs frontend
@@ -60,4 +71,4 @@ logs_backend: start_docker
 logs_database: start_docker
 	@docker-compose -f $(NAME) logs database
 
-.PHONY: all start_docker start_containers frontend_dev down fclean re ps logs_frontend logs_backend logs_database
+.PHONY: all start_docker start_containers frontend_dev backend_dev down fclean re ps db logs_frontend logs_backend logs_database

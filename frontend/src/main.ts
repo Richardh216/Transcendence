@@ -9,12 +9,14 @@ import { TournamentView } from './views/Tournament.js';
 import { RegisterView } from './views/Register.js';
 import { DashboardView } from './views/Dashboard.js';
 import { NotificationManager } from './components/Notification.js';
-import { findUserByUsername, getUserById } from './data/UserService.js';
-import { UserProfile } from './data/Types.js';
+import { findUserByUsername, getCurrentUser, getUserById, logout } from './services/UserService.js'
+import { UserProfile } from './types/index.js';
+import { login } from './services/UserService.js';
 
 // --- State ---
 let isLoggedIn = false;
-let currentUser: UserProfile | null = null; // Store logged-in user details
+// export let user: UserProfile | null = null; // Store logged-in user details
+export let currentUser: UserProfile | null = null; // Store logged-in user details
 
 // --- DOM Elements ---
 let loginViewElement: HTMLElement | null;
@@ -39,7 +41,27 @@ let closeAboutButton: HTMLElement | null;
 let router: Router;
 
 // --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Initializing application...');
+
+    // Initialize user before proceeding
+    await initializeUser();
+
+    console.log("\nmain");
+    console.log(currentUser);
+    console.log("main\n");
+
+    // Proceed with the rest of the initialization
+    initializeApp();
+});
+
+async function initializeUser(): Promise<void> {
+    currentUser = await getCurrentUser();
+    if (currentUser)
+        isLoggedIn = true;
+}
+
+function initializeApp(): void {
     // Get main view containers
     loginViewElement = document.getElementById('login-view');
     appViewElement = document.getElementById('app-view');
@@ -145,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.reload(); // Simple approach to reset the login form
         }
     });
-});
+}
 
 // --- Functions ---
 function setupResponsiveElements(): void {
@@ -321,7 +343,7 @@ function showAboutModal(): void {
 
 function setupEventListeners(): void {
     const loginForm = document.getElementById('login-form') as HTMLFormElement | null;
-    loginForm?.addEventListener('submit', (event) => {
+    loginForm?.addEventListener('submit', async (event) => {
         event.preventDefault();
         console.log('Login attempt...');
 
@@ -336,48 +358,39 @@ function setupEventListeners(): void {
         const username = usernameInput.value;
         const password = passwordInput.value;
 
-        // Debug login attempt keepf or databse user testing
+
+        // Debug login attempt keep for database user testing
         console.log(`Login attempt with username: "${username}" and password: "${password}"`);
 
-        // Find user in mock data
-        const foundUser = findUserByUsername(username);
-        console.log("Found user:", foundUser);
+        try {
 
-        // Check password
-        if (foundUser && foundUser.password === password) {
-            console.log(`Login successful for ${foundUser.displayName}`);
+            currentUser = (await login({ username, password })).user;
+            console.log(`Login successful`);
             isLoggedIn = true;
-            currentUser = foundUser;
-            updateUI();
-            router.navigate('/'); // Navigate to Dashboard (root now..) after successful login
 
-            // delete this later or keep 1
             NotificationManager.show({
                 title: 'Welcome',
-                message: `Welcome back, ${foundUser.displayName}!`,
+                message: `Welcome back, ${currentUser.display_name}!`,
                 type: 'info',
                 duration: 3000
             });
-            
-            setTimeout(() => {
-                NotificationManager.show({
-                    title: 'Login Successful',
-                    message: 'You have successfully logged in.',
-                    type: 'success',
-                    duration: 5000
-                });
-            }, 2000);
-        } else {
+
+            updateUI();
+            router.navigate('/');
+        } catch (error: any) {
             console.log('Login failed: Invalid username or password');
-            // alert('Login failed: Invalid username or password');
+            currentUser = null;
             NotificationManager.show({
                 title: 'Login Failed',
-                message: 'Invalid username or password.',
+                message: error,
                 type: 'error',
                 duration: 5000
             });
-            passwordInput.value = '';
+            updateUI();
+            router.navigate('/'); // Navigate to Dashboard (root now..) after successful login
         }
+        usernameInput.value = '';
+        passwordInput.value = '';
     });
 
     // Register link
@@ -449,6 +462,7 @@ function setupEventListeners(): void {
         console.log('Logout');
         isLoggedIn = false;
         currentUser = null;
+        logout();
         updateUI();
 
         NotificationManager.show({
@@ -468,11 +482,11 @@ function updateUI(): void {
 
         // Update sidebar profile info
         if (sidebarUsernameElement) {
-            sidebarUsernameElement.textContent = currentUser.displayName;
+            sidebarUsernameElement.textContent = currentUser.display_name;
         }
-        if (sidebarAvatarElement && currentUser.avatarUrl) {
-            sidebarAvatarElement.src = currentUser.avatarUrl || 'https://placehold.co/80x80/1d1f21/ffffff?text=User'; // Default avatar
-            sidebarAvatarElement.alt = `${currentUser.displayName}'s avatar`;
+        if (sidebarAvatarElement && currentUser.avatar_url) {
+            sidebarAvatarElement.src = currentUser.avatar_url || 'https://placehold.co/80x80/1d1f21/ffffff?text=User'; // Default avatar
+            sidebarAvatarElement.alt = `${currentUser.display_name}'s avatar`;
         }
 
         // Apply responsive layout

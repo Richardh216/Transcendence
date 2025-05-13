@@ -1,6 +1,12 @@
 import { Router } from '../core/router.js';
-import { findUserByUsername, findUserByEmail, createUser } from '../data/UserService.js';
+import { registerUser } from '../services/UserService.js';
 import { NotificationManager } from '../components/Notification.js';
+import { UserProfile } from '../types/index.js';
+import { api } from '../services/api.js'
+
+//temp
+import { findUserByUsername, findUserByEmail,  getUserById, getCurrentUser } from '../services/UserService.js';
+
 
 export class RegisterView {
     private element: HTMLElement | null = null;
@@ -10,7 +16,39 @@ export class RegisterView {
         this.router = router;
     }
 
-    render(rootElement: HTMLElement): void {
+    async render(rootElement: HTMLElement): Promise<void> {
+
+        // temporary API test start
+        console.log('auth token: ', localStorage.getItem('auth_token'));
+
+        console.log("\n\ncurrent user: ");
+        const tmp1 = await getCurrentUser();
+        console.log(tmp1);
+
+        console.log("\n\nall users");
+        const tmp = (await api.get('/users')).data as UserProfile[];
+        for (const user of tmp)
+            console.log(user);
+
+        console.log("\n\nuser with name 'user1'");
+        const tmp2 = await findUserByUsername('user1');
+        console.log(tmp2);
+
+        console.log("\n\nuser with email 'test@gmail.com'");
+        const tmp3 = await findUserByEmail('test@gmail.com');
+        console.log(tmp3);
+
+        console.log("\n\nuser with ID '2'");
+        const tmp4 = await getUserById(1);
+        console.log(tmp4);
+
+        console.log("\n\nuser with ID '42'");
+        const tmp5 = await getUserById(42);
+        console.log(tmp5);
+        // temporary API test end
+
+
+
         this.element = document.createElement('div');
         this.element.classList.add('register-view');
         this.element.innerHTML = `
@@ -29,7 +67,7 @@ export class RegisterView {
                 
                 <div class="form-group">
                     <label for="register-display-name">Display Name</label>
-                    <input type="text" id="register-display-name" name="displayName" required>
+                    <input type="text" id="register-display-name" name="display_name" required>
                     <small class="form-hint">This is how others will see you in tournaments</small>
                 </div>
                 
@@ -69,7 +107,7 @@ export class RegisterView {
         });
     }
     
-    private handleRegister(event: Event): void {
+    private async handleRegister(event: Event): Promise<void> {
         event.preventDefault();
         
         // Get form elements
@@ -83,7 +121,7 @@ export class RegisterView {
         // Get values
         const username = usernameInput.value.trim();
         const email = emailInput.value.trim();
-        const displayName = displayNameInput.value.trim() || username;
+        const display_name = displayNameInput.value.trim() || username;
         const password = passwordInput.value;
         const confirmPassword = confirmInput.value;
         
@@ -103,42 +141,32 @@ export class RegisterView {
             }
             return;
         }
-        
-        const existingUser = findUserByUsername(username);
-        if (existingUser) {
+
+        try {
+            const newUser = await registerUser({
+                username,
+                email,
+                password,
+                display_name
+            });
+
+            console.log("User registered:", newUser);
+            
+            NotificationManager.show({
+                title: 'Registration Successful',
+                message: 'Your account has been created. You can login.',
+                type: 'success',
+                duration: 5000
+            });
+            
+            window.location.hash = '#/';
+        } catch(error: any) {
             if (errorElement) {
-                errorElement.textContent = "Username already exists";
+                errorElement.textContent = error;
                 errorElement.style.display = 'block';
             }
             return;
         }
-
-        const existingEmail = findUserByEmail(email);
-        if (existingEmail) {
-            if (errorElement) {
-                errorElement.textContent = "Email already registered";
-                errorElement.style.display = 'block';
-            }
-            return;
-        }
-
-        const newUser = createUser({
-            username,
-            email,
-            password,
-            displayName
-        });
-
-        console.log("User registered:", newUser);
-        
-        NotificationManager.show({
-            title: 'Registration Successful',
-            message: 'Your account has been created. You can login.',
-            type: 'success',
-            duration: 5000
-        });
-        
-        window.location.hash = '#/';
     }
 
     destroy(): void {

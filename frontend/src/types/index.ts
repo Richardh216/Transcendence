@@ -5,23 +5,30 @@ export interface UserProfile {
     id: number;
     username: string;
     password?: string;
-    displayName: string;
+    display_name: string;
     email?: string;
     bio?: string;
-    avatarUrl?: string;
-    coverPhotoUrl?: string;
-    joinDate?: string;
-    hasTwoFactorAuth?: boolean;
+    avatar_url?: string;
+    cover_photo_url?: string;
+    join_date?: string;
+    has_two_factor_auth?: boolean;
     stats?: UserStats;
-    matchHistory?: MatchRecord[];
+    match_history?: MatchRecord[];
     achievements?: Achievement[];
     friends?: number[];
-    friendRequests?: FriendRequest[];
-    gameSettings?: GameSettings;
+    friend_requests?: FriendRequest[];
+    game_settings?: GameSettings;
     notifications?: AppNotification[];
     status?: 'online' | 'offline' | 'in-game';
-    lastActive?: Date;
+    last_active?: Date;
 }
+
+// maybe need more
+export interface LoginResponse {
+    token: string;
+    user: UserProfile;
+}
+
 
 export interface UserStats {
     wins: number;
@@ -36,8 +43,6 @@ export interface GameSettings {
     paddleColor: string;
     ballColor: string;
     scoreColor: string;
-    soundEnabled: boolean;
-    vibrationEnabled: boolean;
 }
 
 export interface MatchRecord {
@@ -69,12 +74,29 @@ export interface Achievement {
     dateCompleted?: string;
 }
 
+export interface Friend {
+    user_id: number;
+    friend_id: number;
+    friend_username: string;
+    friend_display_name: string;
+    friend_avatar_url: string;
+    friend_status: string;
+    friend_last_active: string;
+}
+
 export interface FriendRequest {
     id: number;
-    from: number;
-    to: number;
+    from_user_id: number;
+    to_user_id: number;
     status: 'pending' | 'accepted' | 'rejected';
     date: string;
+
+    from_username: string;
+    from_display_name: string;
+    from_avatar_url: string;
+    to_username: string;
+    to_display_name: string;
+    to_avatar_url: string;
 }
 
 export interface ChatMessage {

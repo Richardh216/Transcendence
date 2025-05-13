@@ -1,4 +1,13 @@
 const argon2 = require('argon2');
+const { pipeline } = require('stream/promises');
+const path = require('path');
+const fs = require('fs');
+
+const AVATAR_UPLOAD_DIR = path.join(__dirname, '../uploads/avatars');
+
+if (!fs.existsSync(AVATAR_UPLOAD_DIR)) {
+	fs.mkdirSync(AVATAR_UPLOAD_DIR, { recursive: true });
+}
 
 const getUsers = async (req, reply) => {
 	try {
@@ -17,10 +26,41 @@ const getUsers = async (req, reply) => {
 	}
 };
 
+const getCurrentUser = async (req, reply) => {
+	try {
+		const decodedToken = await req.jwtVerify();
+		if (!decodedToken || !decodedToken.id) {
+			return reply.code(401).send({ message: 'Invalid or missing token' });
+		}
+
+		const { id } = decodedToken;
+		const db = req.server.betterSqlite3;
+
+		const user = db.prepare(`
+			SELECT 
+			id, username, display_name, email, bio,
+			avatar_url, cover_photo_url, join_date,
+			has_two_factor_auth, status, last_active, created_at
+			FROM users 
+			WHERE id = ?
+		`).get(id);
+
+		if (!user) {
+			reply.code(404).send({ message: 'User not found' });
+		} else {
+			reply.send(user);
+		}
+	} catch (error) {
+		req.log.error(error);
+		reply.code(500).send({ message: 'Error retrieving user' });
+	}
+};
+
 const getUser = async (req, reply) => {
 	try {
 		const { id } = req.params;
 		const db = req.server.betterSqlite3;
+		console.log("\n\n\nabxc\n\n\n");
 		
 		const user = db.prepare(`
 			SELECT 
@@ -30,6 +70,56 @@ const getUser = async (req, reply) => {
 			FROM users 
 			WHERE id = ?
 		`).get(id);
+
+		if (!user) {
+			reply.code(404).send({ message: 'User not found' });
+		} else {
+			reply.send(user);
+		}
+	} catch (error) {
+		req.log.error(error);
+		reply.code(500).send({ message: 'Error retrieving user' });
+	}
+};
+
+const getUserByName = async (req, reply) => {
+	try {
+		const { username } = req.params;
+		const db = req.server.betterSqlite3;
+		
+		const user = db.prepare(`
+			SELECT 
+			id, username, display_name, email, bio,
+			avatar_url, cover_photo_url, join_date,
+			has_two_factor_auth, status, last_active, created_at
+			FROM users 
+			WHERE username = ?
+		`).get(username);
+
+		if (!user) {
+			reply.code(404).send({ message: 'User not found' });
+		} else {
+			reply.send(user);
+		}
+	} catch (error) {
+		req.log.error(error);
+		reply.code(500).send({ message: 'Error retrieving user' });
+	}
+};
+
+const getUserByEmail = async (req, reply) => {
+	try {
+		const { email } = req.params;
+		const db = req.server.betterSqlite3;
+		
+		const user = db.prepare(`
+			SELECT 
+			id, username, display_name, email, bio,
+			avatar_url, cover_photo_url, join_date,
+			has_two_factor_auth, status, last_active, created_at
+			FROM users 
+			WHERE email = ?
+		`).get(email);
 
 		if (!user) {
 			reply.code(404).send({ message: 'User not found' });
@@ -312,19 +402,19 @@ const loginUser = async (req, reply) => {
 			return reply.code(401).send({ message: 'Invalid credentials' });
 		}
 
-		if (user.status === 'online') {
-			req.log.info(`Login attempted for user ${user.id} but they are already online.`);
-			// just issue a new token
-			const token = req.server.jwt.sign({ id: user.id, username: user.username });
- 			// send the same response structure as a fresh login
-			return reply.code(200).send({ token: token, user: { id: user.id, username: user.username, display_name: user.display_name} });
-		}
-
 		const isPasswordValid = await argon2.verify(user.password, password);
 
 		if (!isPasswordValid) { // invalid pass
 			return reply.code(401).send({ message: 'Invalid credentials' });
 		}
+
+		// if (user.status === 'online') {
+		// 	req.log.info(`Login attempted for user ${user.id} but they are already online.`);
+		// 	// just issue a new token
+		// 	const token = req.server.jwt.sign({ id: user.id, username: user.username });
+ 		// 	// send the same response structure as a fresh login
+		// 	return reply.code(200).send({ token: token, user: { id: user.id, username: user.username, display_name: user.display_name} });
+		// }
 
 		// update user status
 		db.prepare('UPDATE users SET status = ?, last_active = CURRENT_TIMESTAMP WHERE id = ?').run('online', user.id);
@@ -365,14 +455,91 @@ const logoutUser = async (req, reply) => {
 	}
 };
 
+const uploadAvatar = async (req, reply) => {
+	try {
+		const authenticatedUserId = req.user ? req.user.id : null; // Get user ID from token
+
+		// Get the target user ID from the route parameters
+		const targetUserId = parseInt(req.params.userId, 10);
+
+		// If user is not authenticated OR authenticated user ID does not match the target ID
+		if (!authenticatedUserId || authenticatedUserId !== targetUserId) {
+			reply.code(403).send({ message: 'Forbidden: You can only upload your own avatar.' });
+			return;
+		}
+
+		// Ensure the request is multipart/form-data
+		if (!req.isMultipart()) {
+			reply.code(415).send({ message: 'Unsupported Media Type: Must be multipart/form-data' });
+			return;
+		}
+
+		// Process the file upload
+		const file = await req.file(); // Get the file from the request (returns a stream)
+
+		if (!file) {
+			reply.code(400).send({ message: 'No file uploaded' });
+			return;
+		}
+
+		// maybe implement stricter validation
+		const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+		if (!allowedTypes.includes(file.mimetype)) {
+			reply.code(400).send({ message: `Invalid file type. Only ${allowedTypes.join(', ')} are allowed.` });
+			return;
+		}
+
+		// Generate a unique filename to avoid collisions
+		const fileExtension = path.extname(file.filename);
+		const uniqueFilename = `${targetUserId}-${Date.now()}${fileExtension}`;
+		const filePath = path.join(AVATAR_UPLOAD_DIR, uniqueFilename);
+		const fileUrl = `/uploads/avatars/${uniqueFilename}`; // Public URL path relative to static root
+
+		// Save the file to disk
+		const writeStream = fs.createWriteStream(filePath);
+		try {
+			await pipeline(file.file, writeStream); // Pipe the incoming file stream to the file on disk
+		} catch (pipelineError) {
+			req.log.error('Error writing file to disk:', pipelineError);
+			if (fs.existsSync(filePath)) {
+				fs.unlinkSync(filePath);
+			}
+			throw pipelineError;
+		}
+
+		const db = req.server.betterSqlite3;
+
+		const result = db.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').run(fileUrl, targetUserId);
+
+		if (result.changes === 0) {
+			reply.code(404).send({ message: 'User not found or no changes made' });
+		} else {
+			// maybe delete old avatar
+			reply.code(200).send({ message: 'Avatar uploaded successfully', avatar_url: fileUrl });
+		}
+
+	} catch (error) {
+		req.log.error(error);
+		if (error.message === 'Reach file size limit') {
+			reply.code(413).send({ message: 'File size exceeds limit.' });
+		} else {
+			reply.code(500).send({ message: 'Error uploading avatar' });
+		}
+	}
+};
+
 module.exports = {
 	getUsers,
+	getCurrentUser,
 	getUser,
+	getUserByName,
+	getUserByEmail,
 	getUserProfile,
 	addUser,
 	deleteUser,
 	updateUser,
 	updateUserProfile,
 	loginUser,
-	logoutUser
+	logoutUser,
+	uploadAvatar
 };
