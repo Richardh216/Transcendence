@@ -60,7 +60,6 @@ const getUser = async (req, reply) => {
 	try {
 		const { id } = req.params;
 		const db = req.server.betterSqlite3;
-		console.log("\n\n\nabxc\n\n\n");
 		
 		const user = db.prepare(`
 			SELECT 
@@ -179,10 +178,10 @@ const addUser = async (req, reply) => {
 
 		const paswordHash = await argon2.hash(password);
 
-		try {
-			const result = db.prepare(`
+		const newUserResponse = db.transaction(() => {
+			const userResult = db.prepare(`
 			INSERT INTO users (
-				username, password, display_name, email, bio, 
+				username, password, display_name, email, bio,
 				avatar_url, cover_photo_url, join_date
 			) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 			`).run(
@@ -196,31 +195,50 @@ const addUser = async (req, reply) => {
 				new Date().toISOString()
 			);
 
+			const newUserId = userResult.lastInsertRowid;
+
+			db.prepare(
+				'INSERT INTO game_settings (user_id, board_color, paddle_color, ball_color, score_color) VALUES (?, ?, ?, ?, ?)'
+			).run(newUserId, '#000000', '#FFFFFF', '#FFFFFF', '#FFFFFF');
+
+			db.prepare(
+				'INSERT INTO user_stats (user_id, wins, losses, rank, level) VALUES (?, ?, ?, ?, ?)'
+			).run(newUserId, 0, 0, 'Bronze', 1);
+
 			const newUser = db.prepare(`
-			SELECT 
+			SELECT
 				id, username, display_name, email, bio,
 				avatar_url, cover_photo_url, join_date,
 				has_two_factor_auth, status, last_active, created_at
-			FROM users 
+			FROM users
 			WHERE id = ?
-			`).get(result.lastInsertRowid);
+			`).get(newUserId);
 
-			// omit password hash from response
 			const { password: _, ...userResponse } = newUser;
 
-			reply.code(201).send(userResponse);
-		} catch (err) {
-			if (err.message && err.message.includes('UNIQUE constraint failed: users.username')) {
-				reply.code(409).send({ message: 'Username already exists' });
-			} else if (err.message && err.message.includes('UNIQUE constraint failed: users.email') && email) {
-				reply.code(409).send({ message: 'Email already exists' });
-			} else { // unknown error
-				throw err;
-			}
-		}
+			return userResponse;
+		})();
+
+		reply.code(201).send(newUserResponse);
+
 	} catch (error) {
-		req.log.error(error);
-		reply.code(500).send({ message: 'Error adding user' });
+		if (error.message && error.message.includes('UNIQUE constraint failed: users.username')) {
+			reply.code(409).send({ message: 'Username already exists' });
+		} else if (error.message && error.message.includes('UNIQUE constraint failed: users.email')) {
+			reply.code(409).send({ message: 'Email already exists' });
+		}
+		else if (error.message && error.message.includes('UNIQUE constraint failed: user_stats.user_id')) {
+			req.log.error('Unexpected UNIQUE constraint failure on user_stats:', error);
+			reply.code(500).send({ message: 'Error creating user stats (duplicate entry)' });
+		}
+		else if (error.message && error.message.includes('UNIQUE constraint failed: game_settings.user_id')) {
+			req.log.error('Unexpected UNIQUE constraint failure on game_settings:', error);
+			reply.code(500).send({ message: 'Error creating game settings (duplicate entry)' });
+		}
+		else {
+			req.log.error('Error adding user (transaction catch):', error);
+			reply.code(500).send({ message: 'Error adding user' });
+		}
 	}
 };
 
@@ -528,6 +546,54 @@ const uploadAvatar = async (req, reply) => {
 	}
 };
 
+const updatePassword = async (req, reply) => {
+	const targetUserId = parseInt(req.params.id, 10); 
+	const authenticatedUserId = req.user.id;
+
+	// AUTHORIZATION CHECK: Ensure user is updating their own password
+	if (targetUserId !== authenticatedUserId) {
+		return reply.code(403).send({ message: 'Forbidden: You can only update your own password.' });
+	}
+
+	const { old_password, new_password } = req.body;
+
+	try {
+		const db = req.server.betterSqlite3;
+
+		const user = db.prepare('SELECT id, password FROM users WHERE id = ?').get(authenticatedUserId);
+
+		if (!user) {
+			// This case should ideally not happen if authPreHandler passed, but safety check
+			req.log.error(`User ID ${authenticatedUserId} not found after JWT verification.`);
+			return reply.code(500).send({ message: 'Internal server error: User data not found.' });
+		}
+
+		const isOldPasswordValid = await argon2.verify(user.password, old_password);
+
+		if (!isOldPasswordValid) {
+			// SECURITY: Incorrect old password
+			return reply.code(409).send({ message: 'Incorrect old password.' });
+		}
+
+		// Hash the new password
+		const newPasswordHash = await argon2.hash(new_password);
+
+		// Update the password in the database
+		const result = db.prepare('UPDATE users SET password = ? WHERE id = ?').run(newPasswordHash, authenticatedUserId);
+
+		if (result.changes === 0) {
+			req.log.warn(`Password update attempted for user ${authenticatedUserId} but no changes were made.`);
+			return reply.code(500).send({ message: 'Error updating password.' });
+		}
+
+		reply.code(200).send({ message: 'Password updated successfully.' });
+
+	} catch (error) {
+		req.log.error('Error updating password:', error);
+		reply.code(500).send({ message: 'Error updating password.' });
+	}
+};
+
 module.exports = {
 	getUsers,
 	getCurrentUser,
@@ -541,5 +607,6 @@ module.exports = {
 	updateUserProfile,
 	loginUser,
 	logoutUser,
-	uploadAvatar
+	uploadAvatar,
+	updatePassword
 };
