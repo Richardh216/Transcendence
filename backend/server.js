@@ -3,6 +3,7 @@ TODO:
 	add authentication to many schemas (add forbidden(when in controllers) and unauth errors(ALWAYS) to protected schemas)
 			general rule of thumb: Any route that deals with user-specific data or
 				performs an action on behalf of a specific authenticated user should require authentication.
+	so far achievements and chatMessages done!
 	figure out how to make http into https (reverse proxy container, Caddy or Nginx?)
 	google sign in and 2FA look into
 	update password option for users (done)
@@ -150,7 +151,7 @@ fastify.after((err) => {
 			CREATE TABLE IF NOT EXISTS match_history (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			user_id INTEGER NOT NULL,
-			opponent_id INTEGER NOT NULL,
+			opponent_id INTEGER,
 			opponent_name TEXT NOT NULL,
 			result TEXT NOT NULL CHECK(result IN ('win', 'loss', 'draw')),
 			score TEXT NOT NULL,
