@@ -31,9 +31,23 @@ export async function getUserById(id: number): Promise<UserProfile | null> {
 	try {
 		const user = (await api.get(`/users/${id}`)).data as UserProfile;
 		return user;
-	} catch (error) {
-		console.error(`Failed to fetch user with ID ${id}:`);
+	} catch (error: any) {
+		console.error(`Failed to fetch user with ID ${id}: `, error?.response?.data?.message || error);
 		return null;
+	}
+}
+
+export async function getAllUsers(): Promise<UserProfile[]> {
+	try {
+		const users: UserProfile[] = (await api.get(`/users/`)).data as UserProfile[];
+        for (const user of users) {
+            await setMatchHistory(user);
+            await setUserStats(user);
+        }
+		return users;
+	} catch (error: any) {
+		console.error(`Failed to fetch all users: `, error?.response?.data?.message || error);
+		return [];
 	}
 }
 
@@ -207,6 +221,8 @@ export async function updateUserProfile(userId: number, updates: Partial<UserPro
     try {
         // some security concern here
         const { id, username, password, ...allowedUpdates } = updates;
+        allowedUpdates.avatar_url = undefined; // dont overwrite avatar
+        allowedUpdates.cover_photo_url = undefined; // dont overwrite cover photo
         await api.put(`/users/${userId}`, allowedUpdates);
         return true;
     } catch (error: any) {
@@ -320,4 +336,38 @@ export async function setUserStats(user: UserProfile): Promise<UserStats> {
     user.stats.level = Math.round((user.stats.played / 4) * (1 + user.stats.winrate / 100));
 
     return user.stats;
+}
+
+export async function uploadAvatar(user_id: number, image: File): Promise<string> {
+    try {
+        const formData = new FormData();
+        formData.append('avatar', image);
+        const response = await api.put(`/users/${user_id}/avatar`, formData, {
+            headers: {
+                'Content-Type': undefined,
+            },
+        });
+        const body: { message: string, avatar_url: string } = response.data;
+        return body.avatar_url;
+    } catch (error: any) {
+        console.error(`Failed to upload avatar for user id ${user_id}: `, error?.response?.data?.message || error);
+        return DEFAULT_AVATAR;
+    }
+}
+
+export async function uploadCover(user_id: number, image: File): Promise<string> {
+    try {
+        const formData = new FormData();
+        formData.append('cover', image);
+        const response = await api.put(`/users/${user_id}/cover`, formData, {
+            headers: {
+                'Content-Type': undefined,
+            },
+        });
+        const body: { message: string, cover_photo_url: string } = response.data;
+        return body.cover_photo_url;
+    } catch (error: any) {
+        console.error(`Failed to upload cover photo for user id ${user_id}: `, error?.response?.data?.message || error);
+        return DEFAULT_COVER_PHOTO;
+    }
 }
