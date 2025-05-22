@@ -27,6 +27,7 @@ export async function register(userData: {
     username: string; 
     password: string; 
     email: string;
+<<<<<<< HEAD
     display_name: string;
     avatar_url: string;
     cover_photo_url: string;
@@ -34,6 +35,14 @@ export async function register(userData: {
 }): Promise<UserProfile> {
     try {
         const user = (await api.post('/users', userData)).data as UserProfile;
+=======
+    display_name?: string;
+    avatar_url: 'https://placehold.co/80x80/1d1f21/ffffff?text=User'; // all get same avatar! and we never check if it exist BECOUSE IT DOES!!!
+}): Promise<UserProfile> {
+    try {
+        const user = (await api.post('/users', userData)).data as UserProfile;
+        completeUser(user);
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         return user;
     } catch (error: any) {
         console.error('Error registering user:', error.response?.data?.message || error);
@@ -63,7 +72,10 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
             return null;
         }
         const user = (await api.get(`/users/current`)).data as UserProfile;
+<<<<<<< HEAD
         console.log(`current user language: ${user.language}`);
+=======
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         await completeUser(user);
         return user;
     } catch (error) {

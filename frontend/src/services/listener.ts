@@ -1,6 +1,10 @@
 // Event Listener management
 export interface Listener {
+<<<<<<< HEAD
   element: EventTarget | null | undefined;
+=======
+  element: EventTarget | null;
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
   event: string;
   handler: EventListener;
 }

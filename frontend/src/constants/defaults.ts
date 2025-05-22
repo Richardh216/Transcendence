@@ -58,7 +58,10 @@ export const DEFAULT_ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
 // NULL_USER to be used for default initialization
 export const NULL_USER: UserProfile = {
   id: -1,
@@ -78,9 +81,14 @@ export const NULL_USER: UserProfile = {
   friend_requests: undefined,
   game_settings: undefined,
   notifications: undefined,
+<<<<<<< HEAD
   status: 'offline',
   last_active: '',
   language: 'english',
+=======
+  status: undefined,
+  last_active: undefined,
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
 };
 
 // Default user stats 

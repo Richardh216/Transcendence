@@ -1,6 +1,10 @@
 import { Router } from '../core/router.js';
 import { Listener, addListener, removeListener, removeListeners } from '../services/listener.js';
+<<<<<<< HEAD
 import { getUserById, updateUserProfile, setAchievements, setMatchHistory, setUserStats, uploadAvatar, uploadCover, getFriendsList, getFriendStatus } from '../services/UserService.js';
+=======
+import { getUserById, updateUserProfile, setAchievements, setMatchHistory, setUserStats, uploadAvatar, uploadCover } from '../services/UserService.js';
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
 import { UserProfile } from '../types/index.js';
 import { NotificationManager } from '../components/Notification.js';
 import { currentUser} from '../main.js';
@@ -13,7 +17,10 @@ export class ProfileView {
     private modal: HTMLElement | null = null;
     private router: Router;
     private currentUserId: number = currentUser?.id || -1;
+<<<<<<< HEAD
     private currentUser: UserProfile | null = null;
+=======
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
     private profileUserId: number;
 
     private boundListeners: Listener[] = [];
@@ -216,7 +223,11 @@ export class ProfileView {
                 </div>
             </div>
             `;
+<<<<<<< HEAD
         applyTranslations(this.currentUser.language);
+=======
+
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         // Setup event listeners
         this.setupEventListeners(isOwnProfile, user);
         } catch (error) {
@@ -334,7 +345,10 @@ export class ProfileView {
     }
 
     private initEditProfileModal(user: any): void {
+<<<<<<< HEAD
         console.log("INIT MODAL");
+=======
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         this.modal = document.createElement('div');
         this.modal.id = 'profile-edit-modal';
         this.modal.className = 'modal';
@@ -342,7 +356,11 @@ export class ProfileView {
         this.modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
+<<<<<<< HEAD
                     <h3 data-i18n="editProfile">Edit Profile</h3>
+=======
+                    <h3>Edit Profile</h3>
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                     <button class="modal-close">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -372,7 +390,11 @@ export class ProfileView {
                         
                         <!-- User Info -->
                         <div class="form-group">
+<<<<<<< HEAD
                             <label for="displayName" data-i18n="displayName">Display Name</label>
+=======
+                            <label for="displayName">Display Name</label>
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                             <input type="text" id="displayName" name="displayName" value="${user.display_name}" required>
                         </div>
                         
@@ -382,15 +404,23 @@ export class ProfileView {
                         </div>
                         
                         <div class="form-actions">
+<<<<<<< HEAD
                             <button type="button" class="app-button secondary" id="cancel-edit" data-i18n="cancel">Cancel</button>
                             <button type="submit" class="app-button" id="save-profile" data-i18n="saveChanges">Save Changes</button>
+=======
+                            <button type="button" class="app-button secondary" id="cancel-edit">Cancel</button>
+                            <button type="submit" class="app-button" id="save-profile">Save Changes</button>
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                         </div>
                     </form>
                 </div>
             </div>
         `;
         document.body.appendChild(this.modal);
+<<<<<<< HEAD
         applyTranslations(this.currentUser!.language);
+=======
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
 
         // set up modal event listeners only once
 
@@ -403,10 +433,13 @@ export class ProfileView {
         const closeButton = this.modal.querySelector('.modal-close') as HTMLButtonElement;
         const cancelButton = document.getElementById('cancel-edit') as HTMLButtonElement;
 
+<<<<<<< HEAD
         if (coverUpload)
             console.log(' add listener: coverUpload');
         else
             console.log('not exist: coverUpload');
+=======
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         this.addListener({
             element: coverUpload,
             event: 'change',
@@ -416,6 +449,7 @@ export class ProfileView {
                 const file = fileInput?.files[0];
                 const url = await uploadCover(user.id, file);
                 document.querySelector('.cover-preview')?.setAttribute('style', `background-image: url(${url})`);
+<<<<<<< HEAD
                 document.querySelector('.profile-cover')?.setAttribute('style', `background-image: url(${url})`); console.log('called listener: coverUpload');
             }
         });
@@ -424,6 +458,12 @@ export class ProfileView {
             console.log(' add listener: avatarUpload');
         else
             console.log('not exist: avatarUpload');
+=======
+                document.querySelector('.profile-cover')?.setAttribute('style', `background-image: url(${url})`);
+            }
+        });
+
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         this.addListener({
             element: avatarUpload,
             event: 'change',
@@ -434,6 +474,7 @@ export class ProfileView {
                 const url = await uploadAvatar(user.id, file);
                 document.querySelector('.avatar')?.setAttribute('src', url);
                 document.querySelector('.profile-avatar')?.setAttribute('src', url);
+<<<<<<< HEAD
                 document.querySelector('.edit-avatar-preview')?.setAttribute('src', url); console.log('called listener: avatarUpload');
             }
         });
@@ -442,6 +483,12 @@ export class ProfileView {
             console.log(' add listener: form');
         else
             console.log('not exist: form');
+=======
+                document.querySelector('.edit-avatar-preview')?.setAttribute('src', url);
+            }
+        });
+
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         this.addListener({
             element: form,
             event: 'submit',
@@ -464,6 +511,7 @@ export class ProfileView {
                     });
                     if (this.modal) this.modal.style.display = 'none';
                     // this.router.reload();
+<<<<<<< HEAD
                     const bioElement = document.querySelector('.bio')!;
                     bioElement.innerHTML = bio ? bio : 'No bio yet';
                     if (bio)
@@ -473,6 +521,11 @@ export class ProfileView {
                     document.querySelector('.user-profile > .username')!.innerHTML = displayName;
                     document.querySelector('.profile-info-main > h2')!.innerHTML = displayName;
                     applyTranslations(this.currentUser!.language);
+=======
+                    document.querySelector('.bio')!.innerHTML = bio ? bio : 'No bio yet';
+                    document.querySelector('.user-profile > .username')!.innerHTML = displayName;
+                    document.querySelector('.profile-info-main > h2')!.innerHTML = displayName;
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                 } else {
                     NotificationManager.show({
                         title: 'Error',
@@ -486,6 +539,7 @@ export class ProfileView {
                     saveButton.innerHTML = 'Save Changes';
                     saveButton.removeAttribute('disabled');
                 }
+<<<<<<< HEAD
              console.log('called listener: form');}
         });
 
@@ -517,6 +571,27 @@ export class ProfileView {
             element: window,
             event: 'click',
             handler: async (e) => {if (e.target === this.modal) {this.modal!.style.display = 'none'; console.log('called listener: window');}}
+=======
+            }
+        });
+
+        this.addListener({
+            element: closeButton,
+            event: 'click',
+            handler: async () => {this.modal!.style.display = 'none';}
+        });
+
+        this.addListener({
+            element: cancelButton,
+            event: 'click',
+            handler: async () => {this.modal!.style.display = 'none';}
+        });
+
+        this.addListener({
+            element: window,
+            event: 'click',
+            handler: async (e) => {if (e.target === this.modal) {this.modal!.style.display = 'none';}}
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         });
     }
 
@@ -539,8 +614,11 @@ export class ProfileView {
     destroy(): void {
         console.log("--- DESTROYING PROFILE VIEW ---");
         this.removeListeners();
+<<<<<<< HEAD
         this.modal?.remove();
         this.modal = null;
+=======
+>>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         this.element?.remove();
         this.element = null;
     }
