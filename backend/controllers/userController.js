@@ -75,7 +75,7 @@ const getUser = async (req, reply) => {
 		
 		const user = db.prepare(`
 			SELECT 
-			id, username, display_name, bio,
+			id, username, display_name, email, bio,
 			avatar_url, cover_photo_url, join_date,
 			status, last_active, language
 			FROM users 

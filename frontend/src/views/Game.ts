@@ -21,6 +21,37 @@ export class GameView {
             <div id="modeContainer">
                 <button id="singleplayerButton" data-i18n="playAgainstAI">Play Against AI</button>
                 <button id="multiplayerButton" data-i18n="multiplayer">Multiplayer</button>
+                <div id="controls">
+                    <br><br><br><br><br>
+                    <br><span>Player 1:</span>
+                        <div class="keybind-hint">
+                            <span class="key">W </span><span>paddle up</span>
+                            <br>
+                            <br>
+                            <span class="key">S </span><span>paddle down </span>
+                        </div>
+                    <br><span>Player 2:</span>
+                        <div class="keybind-hint">
+                            <span class="key">↑ </span><span>paddle up</span>
+                            <br>
+                            <br>
+                            <span class="key">↓ </span><span>paddle down </span>
+                        </div>
+                    <br><span>Player 3:</span>
+                        <div class="keybind-hint">
+                            <span class="key">h </span><span>paddle left</span>
+                            <br>
+                            <br>
+                            <span class="key">j </span><span>paddle right </span>
+                        </div>
+                    <br><span>Player 4:</span>
+                        <div class="keybind-hint">
+                            <span class="key">1 </span><span>paddle left</span>
+                            <br>
+                            <br>
+                            <span class="key">2 </span><span>paddle right </span>
+                        </div>
+                </div>
             </div>
             <div id="playerInputModal" style="display: none;">
                 <div id="playerCountSelection" style="display: none;">

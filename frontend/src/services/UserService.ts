@@ -34,7 +34,9 @@ import { getCurrentUser } from './auth.js';
 export async function getUserById(id: number): Promise<UserProfile | null> {
 	try {
 		const user = (await api.get(`/users/${id}`)).data as UserProfile;
+        console.log('get user: email: ', user.email);
         await completeUser(user);
+        console.log('get user: email: ', user.email);
 		return user;
 	} catch (error: any) {
 		console.error(`Failed to fetch user with ID ${id}: `, error?.response?.data?.message || error);
@@ -231,6 +233,17 @@ export async function removeFriend(userId: number, friendId: number): Promise<bo
         return true;
     } catch (error: any) {
         console.error(`Failed to remove friend with ID: ${friendId}`, error?.response?.data?.message || error);
+        return false;
+    }
+}
+
+export async function updateUserEmail(userId: number, updates: Partial<UserProfile>): Promise<boolean> {
+    try {
+        const { id, username, password, ...allowedUpdates } = updates;
+        await api.put(`/users/${userId}`, allowedUpdates);
+        return true;
+    } catch (error: any) {
+        console.error(`Failed to update user profile for ID: ${userId}`, error?.response?.data?.message || error);
         return false;
     }
 }

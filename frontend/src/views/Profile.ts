@@ -64,6 +64,7 @@ export class ProfileView {
             const isOwnProfile = this.profileUserId === this.currentUserId;
             const isFriend = await getFriendStatus(this.currentUserId, this.profileUserId);
 
+            console.log('user email is: ', user.email);
             this.element.innerHTML = `
             <div class="profile-view">
                 <div class="profile-header">

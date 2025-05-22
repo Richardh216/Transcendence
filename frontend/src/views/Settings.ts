@@ -5,6 +5,7 @@ import {
     updateUserGameSettings, 
     updateUserProfile, 
     resetUserStats,
+    updateUserEmail,
 } from '../services/UserService.js';
 import { NotificationManager } from '../components/Notification.js';
 import { GameSettings, UserProfile } from '../types/index.js';
@@ -249,7 +250,7 @@ export class SettingsView {
             
             try {
                 // API call to update email
-                await updateUserProfile(this.currentUserId, { email });
+                await updateUserEmail(this.currentUserId, { email });
                 
                 NotificationManager.show({
                     title: 'Email Updated',
