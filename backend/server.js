@@ -1,21 +1,13 @@
-/*
-TODO: 
-	add authentication to many schemas (add forbidden(when in controllers) and unauth errors(ALWAYS) to protected schemas)
-			general rule of thumb: Any route that deals with user-specific data or
-				performs an action on behalf of a specific authenticated user should require authentication.
-	so far achievements, chatMessages, friends & friend requests, game settings done
-	figure out how to make http into https (reverse proxy container, Caddy or Nginx?)
-	change tournament as requested (done?)
-	Look into simplifying match history, no longer needs tournament
-*/
+const fastify = require('fastify')( {logger: true, trustProxy: true } ); //subject requirement
+const fs = require('fs'); //built in Node.js module, basic utility for system interactions
+const path = require('path'); // built in Node.js module, for path manipulation
+const Database = require('better-sqlite3'); // synchronous Node.js binding for SQLite, provides an interface to interact with SQLite database, only for communication, core engine is very much SQLite
+const jwt = require('@fastify/jwt'); // Fastify plugin for signing and verifying JSON Web Tokens
+const fastifyMultipart = require('@fastify/multipart'); // Fastify plugin for parsing multipart/form-data requests, used for file uploads
+const fastifyStatic = require('@fastify/static'); // Fastify plugin for serving static files like images from a specified directory
 
-const fastify = require('fastify')( {logger: true} );
-const fs = require('fs'); //optional
-const path = require('path'); //optional
-const Database = require('better-sqlite3');
-const jwt = require('@fastify/jwt');
-const fastifyMultipart = require('@fastify/multipart');
-const fastifyStatic = require('@fastify/static');
+const envPath = path.resolve(__dirname, '../.env');
+require('dotenv').config({ path: envPath }); // loads env vars from .env to process.env
 
 const dbDir = path.resolve(__dirname, './db');
 
@@ -37,7 +29,7 @@ try {
 		process.exit(1); // Exit if it's unexpectedly in-memory
 	}
 
-	db.exec('PRAGMA foreign_keys = ON;'); // should be on by default
+	db.exec('PRAGMA foreign_keys = ON;'); // should be on by default, but just in case
 	db.exec('PRAGMA journal_mode = DELETE;');
 	db.exec('PRAGMA synchronous = FULL;');
 } catch (err) {
@@ -66,32 +58,46 @@ fastify.register(fastifyStatic, {
 	immutable: true,
 });
 
-// create secret key (only need to run it once and copy the output and it's useable as the secret)
-const crypto = require('crypto'); // built into node.js
-const jwtSecret = crypto.randomBytes(32).toString('hex');
-console.log("Generated JWT Secret:", jwtSecret); //not used yet
+// Retrieve the JWT secret from environment variables
+const jwtSecret = process.env.JWT_SECRET;
+
+// Check if the secret is set
+if (!jwtSecret) {
+	console.error("FATAL ERROR: JWT_SECRET environment variable is not set!");
+	process.exit(1);
+}
 
 // adding JWT registration
 fastify.register(jwt, {
-	secret: 'notsurehowthisworksyet!', // should be a secure random key (for testing for now)
-	// secret: jwtSecret, // like this?
+	// secret: 'notsurehowthisworksyet!', // should be a secure random key (for testing for now)
+	secret: jwtSecret,
 });
 
-const cors = require('@fastify/cors');
+// const cors = require('@fastify/cors');
+
+fastify.register(require('@fastify/cors'), { // Fastify plugin that enables Cross-Origin Resource Sharing (CORS)
+	origin: ['https://localhost', 'https://127.0.0.1'],
+	credentials: true,
+	methods: ['GET','POST','PUT','PATCH','DELETE'],
+	allowedHeaders: [
+		'Origin','X-Requested-With','Accept',
+		'Content-Type','Authorization'
+	],
+});
 
 // register CORS
-fastify.register(cors, {
-	origin: ['http://127.0.0.1:8080', 'http://localhost:8080', 'http://10.12.5.1:8080'], //temporary solution. we might have to setup a proxy in frontend to forwards api requests through the docker network
-	// origin: 'http://localhost:8080',
-	// origin: 'http://localhost:3000 //dev
+// fastify.register(cors, {
+// 	origin: ['http://127.0.0.1:8080', 'http://localhost:8080', 'http://10.12.5.1:8080'], //temporary solution. we might have to setup a proxy in frontend to forwards api requests through the docker network
+// 	// origin: 'http://localhost:8080',
+// 	// origin: 'http://localhost:3000 //dev
 
-	// Optionally allow requests from multiple specific origins
-	// origin: ['http://localhost:8080', 'https://your-production-frontend.com'],
+// 	// Optionally allow requests from multiple specific origins
+// 	// origin: ['http://localhost:8080', 'https://your-production-frontend.com'],
 
-	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], // Specify allowed methods
-	allowedHeaders: ['Origin', 'X-Requested-With', 'Accept', 'Content-Type', 'Authorization'], // Specify allowed headers
-	credentials: true //for authorization headers
-});
+// 	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], // Specify allowed methods
+// 	allowedHeaders: ['Origin', 'X-Requested-With', 'Accept', 'Content-Type', 'Authorization'], // Specify allowed headers
+// 	credentials: true //for authorization headers
+// });
 
 fastify.register(require('./routes/userRoutes'), { prefix: '/api/users' });
 fastify.register(require('./routes/userStatsRoutes'), { prefix: 'api/users/stats' });
@@ -104,7 +110,7 @@ fastify.register(require('./routes/chatMessagesRoutes'), { prefix: 'api/chat-mes
 fastify.register(require('./routes/notificationsRoutes'), { prefix: '/api/notifications' });
 fastify.register(require('./routes/tournamentRoutes'), { prefix: '/api/tournament' });
 
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 // This hook runs after plugins are registered
 fastify.after((err) => {
@@ -125,7 +131,8 @@ fastify.after((err) => {
 			has_two_factor_auth INTEGER DEFAULT 0,
 			status TEXT DEFAULT 'offline',
 			last_active TEXT,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			language TEXT
 			);
 
 			CREATE TABLE IF NOT EXISTS user_stats (
@@ -143,6 +150,7 @@ fastify.after((err) => {
 			paddle_color TEXT DEFAULT '#FFFFFF',
 			ball_color TEXT DEFAULT '#FFFFFF',
 			score_color TEXT DEFAULT '#FFFFFF',
+			powerup INTEGER DEFAULT 0,
 			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 			);
 
@@ -234,11 +242,43 @@ fastify.after((err) => {
 	}
 });
 
+function sanitizeInput(str) {
+	return str
+		.replace(/&/g, '&amp;') // escape &
+		.replace(/</g, '&lt;') // escape <
+		.replace(/>/g, '&gt;') // escape >
+		.replace(/"/g, '&quot;') // escape "
+		.replace(/'/g, '&#x27;') // escape '
+		.replace(/\//g, '&#x2F;'); // escape /
+}
+
+fastify.addHook('preHandler', async (request, reply) => { // gets called before every single HTTP request, kinda like an interceptor
+	const sanitizeObject = (obj) => {
+		for (const key in obj) {
+		if (typeof obj[key] === 'string') {
+			obj[key] = sanitizeInput(obj[key]);
+		} else if (typeof obj[key] === 'object' && obj[key] !== null) {
+			sanitizeObject(obj[key]); // Recursively sanitize nested objects
+		}
+		}
+	};
+
+	if (request.body && typeof request.body === 'object') {
+		sanitizeObject(request.body);
+	}
+	if (request.query && typeof request.query === 'object') {
+		sanitizeObject(request.query);
+	}
+	if (request.params && typeof request.params === 'object') {
+		sanitizeObject(request.params);
+	}
+});
+
 // Register the database close logic with Fastify's onClose hook
 fastify.addHook('onClose', (instance, done) => {
 	console.log('Fastify shutting down, closing database connection...');
-	const db = instance.betterSqlite3; // Access the db instance
-	if (db && typeof db.close === 'function') {
+	const db = instance.betterSqlite3;
+	if (db && typeof db.close === 'function') { // checks if we can call db.close()
 		try {
 			db.close();
 			console.log('Database connection closed cleanly.');
@@ -255,23 +295,23 @@ fastify.addHook('onClose', (instance, done) => {
 
 // These handlers will catch signals like Ctrl+C and explicitly call fastify.close()
 process.on('SIGINT', () => { // SIGINT is Ctrl+C
-	console.log('SIGINT received, ensuring database connection is closed directly...'); // Log this
-	const db = fastify.betterSqlite3; // Access the db instance
+	console.log('SIGINT received, ensuring database connection is closed directly...');
+	const db = fastify.betterSqlite3;
 	if (db && typeof db.close === 'function') {
 		try {
-			 db.close(); // Close the connection synchronously
-			 console.log('Database connection closed cleanly directly from SIGINT handler.'); // Log this
+			db.close(); // Close the connection synchronously
+			console.log('Database connection closed cleanly directly from SIGINT handler.');
 		} catch (closeErr) {
-			 console.error('Error closing database connection directly from SIGINT handler:', closeErr); // Log this
+			console.error('Error closing database connection directly from SIGINT handler:', closeErr);
 		}
 	} else {
-		console.warn('Database instance not found for final close attempt in SIGINT handler.'); // Log this
+		console.warn('Database instance not found for final close attempt in SIGINT handler.');
 	}
 	process.exit(0); // Exit cleanly
 });
 
 process.on('SIGTERM', () => { // SIGTERM is sent by process managers like Docker, PM2
-	console.log('SIGTERM received, ensuring database connection is closed directly...'); // Log this
+	console.log('SIGTERM received, ensuring database connection is closed directly...');
 	const db = fastify.betterSqlite3;
 	if (db && typeof db.close === 'function') {
 		try {

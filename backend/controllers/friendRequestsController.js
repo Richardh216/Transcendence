@@ -20,7 +20,7 @@ const getFriendRequests = async (req, reply) => {
 			JOIN users ut ON fr.to_user_id = ut.id
 		`).all();
 
-		reply.send(requests);
+		reply.code(200).send(requests);
 	} catch (error) {
 		req.log.error(error);
 		reply.code(500).send({ message: 'Error retrieving friend requests' });
@@ -153,7 +153,6 @@ const addFriendRequest = async (req, reply) => {
 	const authenticatedUserId = req.user.id;
 	const { to_user_id } = req.body;
 	const db = req.server.betterSqlite3;
-	const date = new Date().toISOString();
 
 	if (authenticatedUserId === to_user_id) {
 		reply.code(400).send({ message: 'Cannot send a friend request to yourself' });
@@ -185,13 +184,12 @@ const addFriendRequest = async (req, reply) => {
 
 		// Insert the new friend request using the authenticated user ID as the sender
 		try {
-			const result = db.prepare('INSERT INTO friend_requests (from_user_id, to_user_id, status, date) VALUES (?, ?, ?, ?)').run(
+			const result = db.prepare('INSERT INTO friend_requests (from_user_id, to_user_id, status, date) VALUES (?, ?, ?, CURRENT_TIMESTAMP)').run(
 				authenticatedUserId,
 				to_user_id,
-				'pending',
-				date
+				'pending'
 			);
-			const newRequestId = result.lastInsertedRowid;
+			const newRequestId = result.lastInsertRowid;
 			const newRequest = db.prepare('SELECT id, from_user_id, to_user_id, status, date FROM friend_requests WHERE id = ?').get(newRequestId);
 			reply.code(201).send(newRequest);
 		} catch (err) {

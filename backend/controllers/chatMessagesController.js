@@ -34,7 +34,7 @@ const getChatMessagesBetweenUsers = async (req, reply) => {
 			ORDER BY timestamp
 		`).all(userId1, userId2, userId2, userId1);
 
-		reply.send(messages);
+		reply.code(200).send(messages);
 	} catch (error) {
 		req.log.error(error);
 		reply.code(500).send({ message: 'Error retrieving chat messages' });
@@ -105,9 +105,19 @@ const addChatMessage = async (req, reply) => {
 			return;
 		}
 
+		// Friendship check
+		const friendship = db.prepare(`
+			SELECT 1 FROM friends
+			WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+		`).get(authenticatedUserId, receiver_id, receiver_id, authenticatedUserId);
+
+		if (!friendship) {
+			return reply.code(403).send({ message: 'Forbidden: You can only send messages to friends.' });
+		}
+
 		try {
 			const result = db.prepare('INSERT INTO chat_messages (sender_id, receiver_id, content) VALUES (?, ?, ?)').run(authenticatedUserId, receiver_id, content);
-			const newMessageId = result.lastInsertedRowid;
+			const newMessageId = result.lastInsertRowid;
 			const newMessage = db.prepare('SELECT * FROM chat_messages WHERE id = ?').get(newMessageId);
 			reply.code(201).send(newMessage);
 		} catch (err) {

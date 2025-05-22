@@ -3,7 +3,7 @@ const getAchievements = async (req, reply) => {
 	try {
 		const db = req.server.betterSqlite3;
 		const achievements = db.prepare('SELECT * FROM achievements').all();
-		reply.send(achievements);
+		reply.code(200).send(achievements);
 	} catch (error) {
 		req.log.error(error);
 		reply.code(500).send({ message: 'Error retrieving achievements' });
@@ -16,7 +16,7 @@ const getAchievement = async (req, reply) => {
 	const authenticatedUserId = req.user.id;
 	try {
 		const db = req.server.betterSqlite3;
-		const achievement = db.prepare('SELECT * FROM achievements WHERE id = ?').get(id);
+		const achievement = db.prepare('SELECT * FROM achievements WHERE id = ?').get(id); // id is simply treated as data, not and SQL query, thus safe from SQL injections
 
 		if (!achievement) {
 			reply.code(404).send({ message: 'Achievement not found' });
@@ -28,7 +28,7 @@ const getAchievement = async (req, reply) => {
 			reply.code(403).send({ message: 'Forbidden: You can only view your own achievements.' });
 			return; // Stop processing
 		}
-		reply.send(achievement);
+		reply.code(200).send(achievement);
 	} catch (error) {
 		req.log.error(error);
 		reply.code(500).send({ message: 'Error retrieving achievement' });
@@ -49,7 +49,7 @@ const getUserAchievements = async (req, reply) => {
 	try {
 		const db = req.server.betterSqlite3;
 		const achievements = db.prepare('SELECT * FROM achievements WHERE user_id = ?').all(authenticatedUserId);
-		reply.send(achievements);
+		reply.code(200).send(achievements);
 	} catch (error) {
 		req.log.error(error);
 		reply.code(500).send({ message: 'Error retrieving user achievements' });
@@ -85,7 +85,7 @@ const addAchievement = async (req, reply) => {
 
 		try {
 			const result = db.prepare('INSERT INTO achievements (user_id, name, description, icon, completed, date_completed) VALUES (?, ?, ?, ?, ?, ?)').run(authenticatedUserId, name, description, icon, completed, date_completed || null);
-			const newAchievementId = result.lastInsertedRowid;
+			const newAchievementId = result.lastInsertRowid;
 			const newAchievement = db.prepare('SELECT * FROM achievements WHERE id = ?').get(newAchievementId);
 			reply.code(201).send(newAchievement);
 		} catch (err) {

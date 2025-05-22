@@ -19,8 +19,9 @@ export interface UserProfile {
     friend_requests?: FriendRequest[];
     game_settings?: GameSettings;
     notifications?: AppNotification[];
-    status?: 'online' | 'offline' | 'in-game';
-    last_active?: Date;
+    status: 'online' | 'offline' | 'in-game';
+    last_active: string;
+    language: 'english' | 'german' | 'spanish';
 }
 
 // maybe need more
@@ -45,6 +46,7 @@ export interface GameSettings {
     paddle_color: string;
     ball_color: string;
     score_color: string;
+    powerup: boolean;
 }
 
 export interface MatchRecord {
@@ -66,7 +68,7 @@ export interface GameInvite {
     from: number;
     to: number;
     status: 'pending' | 'accepted' | 'rejected' | 'expired';
-    timestamp: Date;
+    timestamp: string;
     gameMode?: string;
 }
 
@@ -77,6 +79,11 @@ export interface Achievement {
     icon: string;
     completed: boolean;
     dateCompleted?: string;
+    translations?: {
+        [lang: string]: {
+          description: string;
+        }
+    };
 }
 
 export interface Friend {
@@ -106,11 +113,27 @@ export interface FriendRequest {
 
 export interface ChatMessage {
     id: number;
-    senderId: number;
-    receiverId: number;
+    sender_id: number;
+    receiver_id: number;
     content: string;
-    timestamp: Date;
+    timestamp: string;
     read: boolean;
+}
+
+export interface ChatMessageDetail {
+    id: number;
+    sender_id: number;
+    receiver_id: number;
+    content: string;
+    timestamp: string;
+    read: boolean;
+
+    sender_username: string;
+    sender_display_name: string;
+    sender_avatar_url: string;
+    receiver_username: string;
+    receiver_display_name: string;
+    receiver_avatar_url: string;
 }
 
 export interface AppNotification {
@@ -129,4 +152,26 @@ export interface NotificationOptions {
     message: string;
     duration?: number; // in milliseconds
     type?: 'info' | 'success' | 'warning' | 'error';
+}
+
+export interface TournamentMatch {
+
+	id: number;
+	round: number;
+	player1_name?: string | null;
+	player2_name?: string | null;
+	score?: string | null;
+	winner_name?: string | null;
+	status: 'pending' | 'running' | 'finished';
+};
+
+export interface Tournament {
+	id: number;
+	tournament_name: string;
+	creator_id: number;
+	player_amount: number;
+	status: 'pending' | 'running' | 'finished';
+	winner_name?: string | null;
+	players: string[];
+	matches: TournamentMatch[];
 }

@@ -13,7 +13,9 @@ const {
 	logoutUser,
 	uploadAvatar,
 	uploadCover,
-	updatePassword
+	updatePassword,
+	gameStart,
+	gameEnd
 } = require('../controllers/userController');
 
 const {
@@ -26,6 +28,8 @@ const {
 const { User, loginBody, loginResponse, updatePasswordBody } = require('../schemas/userSchema');
 
 const authPreHandler = require('./authPreHandlerRoutes');
+
+const updateOnlineStatusPreHandler = require('./updateOnlineStatusPreHandlerRoutes');
 
 const normalizeEmail = async (req, reply) => {
 	if (req.body && req.body.email) {
@@ -52,7 +56,7 @@ const getUsersOpts = {
 
 // Options for get current User (Requires AUTH)
 const getCurrentUserOpts = {
-	preHandler: [authPreHandler],
+	preHandler: [authPreHandler, updateOnlineStatusPreHandler],
 	schema: {
 		response: {
 			200: User,
@@ -107,7 +111,7 @@ const getUserByNameOpts = {
 
 // Options for get User by Email (Requires AUTH + MATCHING ID CHECK in controller)
 const getUserByEmailOpts = {
-	preHandler: [authPreHandler, normalizeEmail],
+	preHandler: [authPreHandler, normalizeEmail, updateOnlineStatusPreHandler],
 	schema: {
 		params: {
 			type: 'object',
@@ -159,10 +163,11 @@ const postUserOpts = {
 				username: { type: 'string', minLength: 1 },
 				password: { type: 'string', minLength: 4 },
 				display_name: { type: 'string', minLength: 1 },
-				email: { type: 'string', format: 'email', nullable: true },
+				email: { type: 'string', format: 'email' },
 				bio: { type: 'string', nullable: true },
-				// avatar_url: { type: 'string', nullable: true }, //check these if they are required
-				// cover_photo_url: { type: 'string', nullable: true }
+				avatar_url: { type: 'string' },
+				cover_photo_url: { type: 'string' },
+				language: { type: 'string', enum: ['english', 'german', 'spanish']},
 			},
 			additionalProperties: false
 		},
@@ -178,7 +183,7 @@ const postUserOpts = {
 
 // Options for update User (full update) (Requires AUTH + MATCHING ID CHECK)
 const updateUserOpts = {
-	preHandler: [authPreHandler],
+	preHandler: [authPreHandler, updateOnlineStatusPreHandler],
 	schema: {
 		params: {
 			type: 'object',
@@ -217,7 +222,7 @@ const updateUserOpts = {
 
 // Options for update User Profile (partial update) (Requires AUTH + MATCHING ID CHECK)
 const updateUserProfileOpts = {
-	preHandler: [authPreHandler],
+	preHandler: [authPreHandler, updateOnlineStatusPreHandler],
 	schema: {
 		params: {
 			type: 'object',
@@ -232,7 +237,8 @@ const updateUserProfileOpts = {
 				display_name: { type: 'string', minLength: 1 },
 				bio: { type: 'string', nullable: true },
 				avatar_url: { type: 'string', nullable: true, format: 'uri-reference' },
-				cover_photo_url: { type: 'string', nullable: true, format: 'uri-reference' }
+				cover_photo_url: { type: 'string', nullable: true, format: 'uri-reference' },
+				language: { type: 'string', enum: ['english', 'german', 'spanish']},
 			},
 			minProperties: 1, // at least 1
 			additionalProperties: false
@@ -251,7 +257,7 @@ const updateUserProfileOpts = {
 
 // Options for delete User (Requires AUTH + MATCHING ID CHECK)
 const deleteUserOpts = {
-	preHandler: [authPreHandler],
+	preHandler: [authPreHandler, updateOnlineStatusPreHandler],
 	schema: {
 		params: {
 			type: 'object',
@@ -301,7 +307,7 @@ const logoutUserOpts = {
 
 // Options for upload Avatar (Requires AUTH + MATCHING USER ID CHECK)
 const uploadAvatarOpts = {
-	preHandler: [authPreHandler],
+	preHandler: [authPreHandler, updateOnlineStatusPreHandler],
 	schema: {
 		params: {
 			type: 'object',
@@ -333,7 +339,7 @@ const uploadAvatarOpts = {
 
 // Options for upload Cover Photo (Requires AUTH + MATCHING USER ID CHECK)
 const uploadCoverOpts = {
-	preHandler: [authPreHandler],
+	preHandler: [authPreHandler, updateOnlineStatusPreHandler],
 	schema: {
 		params: {
 			type: 'object',
@@ -365,7 +371,7 @@ const uploadCoverOpts = {
 
 // Options for update password (Requires AUTH + MATCHING ID CHECK)
 const updatePasswordOpts = {
-	preHandler: [authPreHandler],
+	preHandler: [authPreHandler, updateOnlineStatusPreHandler],
 	schema: {
 		params: {
 			type: 'object',
@@ -385,6 +391,52 @@ const updatePasswordOpts = {
 		},
 	},
 	handler: updatePassword,
+};
+
+// Options for game-start route (Requires AUTH + Matching ID in URL)
+const gameStartOpts = {
+	preHandler: [authPreHandler],
+	schema: {
+		params: {
+			type: 'object',
+			properties: {
+				id: { type: 'integer' }
+			},
+			required: ['id']
+		},
+		response: {
+			200: BasicErrorSchema,
+			400: ValidationErrorSchema,
+			401: UnauthorizedErrorSchema,
+			403: ForbiddenErrorSchema,
+			404: BasicErrorSchema,
+			500: BasicErrorSchema
+		}
+	},
+	handler: gameStart,
+};
+
+// Options for game-end route (Requires AUTH + Matching ID in URL)
+const gameEndOpts = {
+	preHandler: [authPreHandler],
+	schema: {
+		params: {
+			type: 'object',
+			properties: {
+				id: { type: 'integer' }
+			},
+			required: ['id']
+		},
+		response: {
+			200: BasicErrorSchema,
+			400: ValidationErrorSchema,
+			401: UnauthorizedErrorSchema,
+			403: ForbiddenErrorSchema,
+			404: BasicErrorSchema,
+			500: BasicErrorSchema
+		}
+	},
+	handler: gameEnd,
 };
 
 function userRoutes(fastify, options, done) {
@@ -430,6 +482,11 @@ function userRoutes(fastify, options, done) {
 
 	// Upload Cover Photo - Requires AUTH + MATCHING USER ID CHECK
 	fastify.put('/:userId/cover', uploadCoverOpts);
+
+	// Game start -- requires AUTH
+	fastify.post('/:id/status/game-start', gameStartOpts);
+	// Game end -- requires AUTH
+	fastify.post('/:id/status/game-end', gameEndOpts);
 
 	done();
 }

@@ -7,10 +7,11 @@ import {
     resetUserStats,
 } from '../services/UserService.js';
 import { NotificationManager } from '../components/Notification.js';
-import { GameSettings } from '../types/index.js';
+import { GameSettings, UserProfile } from '../types/index.js';
 import { currentUser } from '../main.js';
 import * as Auth from '../services/auth.js';
 import { DEFAULT_ACHIEVEMENTS, DEFAULT_GAME_SETTINGS } from '../constants/defaults.js';
+import { applyTranslations, Language } from "./Translate.js";
 
 export class SettingsView {
     private element: HTMLElement | null = null;
@@ -26,7 +27,6 @@ export class SettingsView {
     async render(rootElement: HTMLElement): Promise<void> {
         this.element = document.createElement('div');
         this.element.className = 'settings-view';
-        this.gameSettings = await getUserGameSettings(this.currentUserId);
         
         // Show loading state
         if (!this.element)
@@ -41,107 +41,136 @@ export class SettingsView {
                 this.element.innerHTML = '<div class="error">User not found</div>';
                 return;
             }
+            this.currentUserId = user.id;
             await this.updateGameSettings();
+            this.gameSettings = await getUserGameSettings(this.currentUserId);
     
             this.element.innerHTML = `
                 <div class="settings-header">
-                    <h2>Settings</h2>
-                    <p>Customize your experience and manage account settings</p>
+                    <h2 data-i18n="settings">Settings</h2>
+                    <p data-i18n="customizeExperience">Customize your experience and manage account settings</p>
                 </div>
                 
                 <div class="settings-container">
                     <div class="settings-sidebar">
                         <ul class="settings-nav">
-                            <li><a href="#security" class="active">Security & Privacy</a></li>
-                            <li><a href="#game">Game Preferences</a></li>
+                            <li><a href="#game" class="active" data-i18n="gamePreferences">Game Preferences</a></li>
+                            <li><a href="#security" data-i18n="securityPrivacy">Security & Privacy</a></li>
+                            <li><a href="#language" data-i18n="language">Language</a></li>
                         </ul>
                     </div>
                     
                     <div class="settings-content">
-
-                        <!-- Security Panel -->
-                        <div id="security" class="settings-panel active">
-                            <h3>Security & Privacy</h3>
-
-                            <div class="settings-section">
-                                <h4>Email Address</h4>
-                                <form id="email-form" class="settings-form">
-                                    <div class="form-group">
-                                        <label for="settings-email">Email</label>
-                                        <input type="email" id="settings-email" value="${user.email || ''}">
-                                        <small>Your email is used for important account notifications and security features</small>
-                                    </div>
-                                    <button type="submit" class="app-button">Update Email</button>
-                                </form>
-                            </div>
-                            
-                            <div class="settings-section">
-                                <h4>Password</h4>
-                                <form id="password-form" class="settings-form">
-                                    <div class="form-group">
-                                        <label for="current-password">Current Password</label>
-                                        <input type="password" id="current-password" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="new-password">New Password</label>
-                                        <input type="password" id="new-password" required>
-                                        <small class="form-hint">Use at least 8 characters</small>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="confirm-password">Confirm New Password</label>
-                                        <input type="password" id="confirm-password" required>
-                                    </div>
-                                    <button type="submit" class="app-button">Change Password</button>
-                                </form>
-                            </div>
-                        </div>
                         
                         <!-- Game Preferences Panel -->
-                        <div id="game" class="settings-panel">
-                            <h3>Game Preferences</h3>
+                        <div id="game" class="settings-panel active">
+                            <h3 data-i18n="gamePreferences">Game Preferences</h3>
                             
                             <div class="settings-section">
-                                <h4>Visual Settings</h4>
+                                <h4 data-i18n="visualSettings">Visual Settings</h4>
                                 <div class="settings-form">
                                     <div class="form-group color-picker">
-                                        <label for="board-color">Board Color</label>
+                                        <label for="board-color" data-i18n="boardColor">Board Color</label>
                                         <div class="color-preview">
                                             <input type="color" id="board-color" value="${this.gameSettings.board_color}">
                                             <span class="color-value">${this.gameSettings.board_color}</span>
                                         </div>
                                     </div>
                                     <div class="form-group color-picker">
-                                        <label for="paddle-color">Paddle Color</label>
+                                        <label for="paddle-color" data-i18n="paddleColor">Paddle Color</label>
                                         <div class="color-preview">
                                             <input type="color" id="paddle-color" value="${this.gameSettings.paddle_color}">
                                             <span class="color-value">${this.gameSettings.paddle_color}</span>
                                         </div>
                                     </div>
                                     <div class="form-group color-picker">
-                                        <label for="ball-color">Ball Color</label>
+                                        <label for="ball-color" data-i18n="ballColor">Ball Color</label>
                                         <div class="color-preview">
                                             <input type="color" id="ball-color" value="${this.gameSettings.ball_color}">
                                             <span class="color-value">${this.gameSettings.ball_color}</span>
                                         </div>
                                     </div>
                                     <div class="form-group color-picker">
-                                        <label for="score-color">Score Color</label>
+                                        <label for="score-color" data-i18n="scoreColor">Score Color</label>
                                         <div class="color-preview">
                                             <input type="color" id="score-color" value="${this.gameSettings.score_color}">
                                             <span class="color-value">${this.gameSettings.score_color}</span>
                                         </div>
                                     </div>
+                                    <div class="toggle-setting">
+                                        <div>
+                                            <h5 data-i18n="powerUp">Power-Up</h5>
+                                        </div>
+                                        <label class="toggle">
+                                            <input type="checkbox" id="powerup" ${this.gameSettings.powerup ? 'checked' : ''}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="keybind-hint">
+                                        <span class="key">D </span><span data-i18n="leftPlayer"></span>
+                                        <br>
+                                        <br>
+                                        <span class="key">← </span><span data-i18n="rightPlayer"></span>
+                                    </div>
                                     
                                     <div class="game-preview">
-                                        <h5>Preview</h5>
+                                        <h5 data-i18n="preview">Preview</h5>
                                         <div class="game-preview-container" id="game-preview">
                                             <!-- Game preview will be rendered here -->
                                         </div>
                                     </div>
                                     
-                                    <button type="button" class="app-button" id="save-game-settings">Save Game Settings</button>
+                                    <button type="button" class="app-button" id="save-game-settings" data-i18n="saveGameSettings">Save Game Settings</button>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Security Panel -->
+                        <div id="security" class="settings-panel">
+                            <h3 data-i18n="securityPrivacy">Security & Privacy</h3>
+
+                            <div class="settings-section">
+                                <h4 data-i18n="emailAddress">Email Address</h4>
+                                <form id="email-form" class="settings-form">
+                                    <div class="form-group">
+                                        <label for="settings-email" data-i18n="email">Email</label>
+                                        <input type="email" id="settings-email" value="${user.email || ''}">
+                                        <small data-i18n="emailDescription">Your email is used for important account notifications and security features</small>
+                                    </div>
+                                    <button type="submit" class="app-button" data-i18n="updateEmail">Update Email</button>
+                                </form>
+                            </div>
+                            
+                            <div class="settings-section">
+                                <h4 data-i18n="password">Password</h4>
+                                <form id="password-form" class="settings-form">
+                                    <div class="form-group">
+                                        <label for="current-password" data-i18n="currentPassword">Current Password</label>
+                                        <input type="password" id="current-password" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new-password" data-i18n="newPassword">New Password</label>
+                                        <input type="password" id="new-password" required>
+                                        <small class="form-hint" data-i18n="passwordHint">Use at least 8 characters</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="confirm-password" data-i18n="confirmNewPassword">Confirm New Password</label>
+                                        <input type="password" id="confirm-password" required>
+                                    </div>
+                                    <button type="submit" class="app-button" data-i18n="changePassword">Change Password</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Language Panel -->
+                        <div id="language" class="settings-panel">
+                            <h3 data-i18n="language">Language</h3>
+                            <label for="language-options" data-i18n="chooseLanguage">Choose a language:</label>
+                            <select id="language-options" name="language">
+                                <option value="english" data-i18n="english" ${user.language === 'english' ? 'selected' : ''}>English</option>
+                                <option value="spanish" data-i18n="spanish" ${user.language === 'spanish' ? 'selected' : ''}>Spanish</option>
+                                <option value="german" data-i18n="german" ${user.language === 'german' ? 'selected' : ''}>German</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -150,21 +179,21 @@ export class SettingsView {
                 <div class="settings-modal" id="confirm-modal">
                     <div class="settings-modal-content">
                         <div class="settings-modal-header">
-                            <h3 id="confirm-modal-title">Confirmation</h3>
+                            <h3 id="confirm-modal-title" data-i18n="confirmation">Confirmation</h3>
                             <button class="settings-modal-close">&times;</button>
                         </div>
                         <div class="settings-modal-body">
-                            <p id="confirm-modal-message">Are you sure you want to proceed?</p>
+                            <p id="confirm-modal-message" data-i18n="confirmMessage">Are you sure you want to proceed?</p>
                         </div>
                         <div class="settings-modal-footer">
-                            <button class="app-button" id="confirm-modal-cancel">Cancel</button>
-                            <button class="app-button danger" id="confirm-modal-confirm">Confirm</button>
+                            <button class="app-button" id="confirm-modal-cancel" data-i18n="cancel">Cancel</button>
+                            <button class="app-button danger" id="confirm-modal-confirm" data-i18n="confirm">Confirm</button>
                         </div>
                     </div>
                 </div>
             `;
             // Set up event listeners
-            this.setupEventListeners();
+            this.setupEventListeners(user);
             await this.updateGameSettings();
         } catch (error) {
             console.error("Error rendering settings:", error);
@@ -172,7 +201,7 @@ export class SettingsView {
         }
     }
     
-    private setupEventListeners(): void {
+    private setupEventListeners(user: UserProfile): void {
         if (!this.element) return;
         
         // Tab navigation
@@ -267,25 +296,20 @@ export class SettingsView {
                 return;
             }
             
-            try {
-                // API call to update password
-                const success = await Auth.updateUserPassword(this.currentUserId, oldPassword, newPassword);
+            // API call to update password
+            const success = await Auth.updateUserPassword(this.currentUserId, oldPassword, newPassword);
+            
+            if (success) {
+                NotificationManager.show({
+                    title: 'Password Updated',
+                    message: 'Your password has been changed successfully.',
+                    type: 'success',
+                    duration: 3000
+                });
                 
-                if (success) {
-                    NotificationManager.show({
-                        title: 'Password Updated',
-                        message: 'Your password has been changed successfully.',
-                        type: 'success',
-                        duration: 3000
-                    });
-                    
-                    // Clear form
-                    (passwordForm as HTMLFormElement).reset();
-                } else {
-                    throw new Error('Password update failed');
-                }
-            } catch (error) {
-                console.error("Error updating password:", error);
+                // Clear form
+                (passwordForm as HTMLFormElement).reset();
+            } else {
                 NotificationManager.show({
                     title: 'Password Error',
                     message: 'Failed to update password. Current password may be incorrect.',
@@ -314,6 +338,14 @@ export class SettingsView {
                 this.renderGamePreview();
             });
         });
+        
+        // Power-Up checkbox
+        const powerUpCheckbox = this.element.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        powerUpCheckbox?.addEventListener('input', () => {
+            if (!this.element || !powerUpCheckbox)
+                return;
+            this.gameSettings.powerup = powerUpCheckbox.checked;
+        });
 
         // Save game settings
         const saveGameSettingsBtn = this.element.querySelector('#save-game-settings');
@@ -338,8 +370,21 @@ export class SettingsView {
                 confirmModal.classList.remove('active');
             }
         });
+          
+        /* Language handler */
+        const languageSelect = document.querySelector("#language-options") as HTMLSelectElement;
+        
+        if (languageSelect) {
+            applyTranslations(user.language);
+        
+            languageSelect.addEventListener("change", async () => {
+                const selectedLanguage = languageSelect.value as Language;
+                await updateUserProfile(this.currentUserId, { language: selectedLanguage });
+                applyTranslations(selectedLanguage);
+            });
+        }                
     }
-    
+
     private async updateGameSettings(): Promise<void> {
         if (!this.element) return;
         
@@ -383,8 +428,6 @@ export class SettingsView {
         const previewContainer = this.element.querySelector('#game-preview');
         if (!previewContainer) return;
 
-        console.log("rendering game preview");
-        
         // Create a canvas for preview
         previewContainer.innerHTML = '';
     
@@ -435,6 +478,7 @@ export class SettingsView {
     }
 
     destroy(): void {
+        this.element?.remove();
         this.element = null;
     }
 }

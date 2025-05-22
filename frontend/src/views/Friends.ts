@@ -8,14 +8,17 @@ import {
     getIncomingFriendRequests,
     getOutgoingFriendRequests,
     acceptFriendRequest,
-    rejectFriendRequest
+    rejectFriendRequest,
+    sendMessage
 } from '../services/UserService.js';
-import { currentUser } from '../main.js';
+import { applyTranslations } from './Translate.js';
+import { UserProfile } from '../types/index.js';
 
 export class FriendsView {
     private element: HTMLElement | null = null;
     private router: Router;
-    private currentUserId: number = currentUser?.id || -1; // get real user session
+    private currentUserId: number = -1;
+    private currentUser: UserProfile | null = null;
 
     constructor(router: Router) {
         this.router = router;
@@ -26,55 +29,56 @@ export class FriendsView {
         this.element.className = 'friends-view';
 
         try {
-            const currentUser = getUserById(this.currentUserId);
-            if (!currentUser) {
+            this.currentUser = await Auth.getCurrentUser();
+            if (!this.currentUser) {
                 this.element.innerHTML = '<p>User not found</p>';
                 rootElement.appendChild(this.element);
                 return;
             }
+            this.currentUserId = this.currentUser.id;
 
             // Create the UI with layout matching Settings style
             this.element.innerHTML = `
                 <div class="friends-header">
-                    <h2>Friends</h2>
-                    <p>Connect with other players and manage your friend list</p>
+                    <h2 data-i18n="friends">Friends</h2>
+                    <p data-i18n="connectWithPlayers">Connect with other players and manage your friend list</p>
                 </div>
-                
+
                 <div class="friends-container">
                     <div class="friends-sidebar">
                         <div class="friends-search">
-                            <input type="text" id="friend-search" placeholder="Search for users...">
-                            <button id="search-button" class="app-button">Search</button>
+                            <input type="text" id="friend-search" data-i18n="searchForUsers" placeholder="Search for users...">
+                            <button id="search-button" class="app-button" data-i18n="search">Search</button>
                         </div>
-                        
+
                         <ul class="friends-nav">
-                            <li><a href="#all-friends" class="active" data-tab="friends-list">My Friends <span class="friends-count" id="friends-count"></span></a></li>
-                            <li><a href="#requests" data-tab="requests">Friend Requests <span class="friends-count" id="request-count"></span></a></li>
+                            <li><a href="#all-friends" class="active" data-tab="friends-list" data-i18n="myFriends">My Friends <span class="friends-count" id="friends-count"></span></a></li>
+                            <li><a href="#requests" data-tab="requests" data-i18n="friendRequests">Friend Requests <span class="friends-count" id="request-count"></span></a></li>
                         </ul>
                     </div>
-                    
+
                     <div class="friends-content">
                         <div id="friends-list" class="friends-panel active">
-                            <h3>My Friends</h3>
+                            <h3 data-i18n="myFriends">My Friends</h3>
                             <div class="friends-grid" id="friends-grid">
                                 <!-- Friends will be loaded here -->
-                                <div class="loading-spinner">Loading friends...</div>
+                                <div class="loading-spinner" data-i18n="loadingFriends">Loading friends...</div>
                             </div>
                         </div>
-                        
+
                         <div id="requests" class="friends-panel">
-                            <h3>Incoming Friend Requests</h3>
+                            <h3 data-i18n="incomingFriendRequests">Incoming Friend Requests</h3>
                             <div class="requests-list" id="requests-list">
                                 <!-- Friend requests will be loaded here -->
-                                <div class="loading-spinner">Loading requests...</div>
+                                <div class="loading-spinner" data-i18n="loadingRequests">Loading requests...</div>
                             </div>
                         </div>
-                        
+
                         <div id="search-results" class="friends-panel search-results-panel">
-                            <h3>Search Results</h3>
+                            <h3 data-i18n="searchResults">Search Results</h3>
                             <div class="search-results-container" id="search-results-container">
                                 <!-- Search results will appear here -->
-                                <p>Search for users to add them as friends</p>
+                                <p data-i18n="searchForAddFriends">Search for users to add them as friends</p>
                             </div>
                         </div>
                     </div>
@@ -82,7 +86,8 @@ export class FriendsView {
             `;
 
             rootElement.appendChild(this.element);
-            
+            applyTranslations(this.currentUser.language);
+
             // Setup event handlers
             this.setupEventListeners();
             
@@ -163,7 +168,7 @@ export class FriendsView {
             const friendsGrid = this.element?.querySelector('#friends-grid');
             const friendsCount = this.element?.querySelector('#friends-count');
             
-            if (!friendsGrid || !currentUser) return;
+            if (!friendsGrid || !this.currentUser) return;
         
             const friends = await getFriendsList(this.currentUserId);
         
@@ -173,7 +178,8 @@ export class FriendsView {
             }
 
             if (!friends || friends.length === 0) {
-                friendsGrid.innerHTML = '<p class="chat-welcome">You don\'t have any friends yet. Use the search to find other players.</p>';
+                friendsGrid.innerHTML = '<p class="chat-welcome" data-i18n="noFriends">You don\'t have any friends yet. Use the search to find other players.</p>';
+                applyTranslations(this.currentUser.language);
                 return;
             }
 
@@ -219,15 +225,23 @@ export class FriendsView {
             const inviteButtons = this.element?.querySelectorAll('.friend-button.invite');
             inviteButtons?.forEach(button => {
                 button.addEventListener('click', async () => {
-                    const friendId = button.getAttribute('data-id');
-                    const friend = await getUserById(Number(friendId));
-                    if (friend) {
+                    const friendId = Number(button.getAttribute('data-id'));
+                    const friend = await getUserById(friendId);
+                    if (!friend || !(await sendMessage(friendId, "Hey, let's play a game!"))) {
+                        NotificationManager.show({
+                            title: 'Game Invitation',
+                            message: `Failed to send invitation ${friend ? `to ${friend.display_name}` : ``}`,
+                            type: 'error',
+                            duration: 3000
+                        });
+                    } else {
                         NotificationManager.show({
                             title: 'Game Invitation',
                             message: `Invitation sent to ${friend.display_name}`,
                             type: 'success',
                             duration: 3000
                         });
+                        this.router.navigate(`/chat/${friendId}`);
                     }
                 });
             });
@@ -257,7 +271,8 @@ export class FriendsView {
             }
             
             if (pendingRequests.length === 0) {
-                requestsList.innerHTML = '<p class="chat-welcome">You don\'t have any friend requests.</p>';
+                requestsList.innerHTML = '<p class="chat-welcome" data-i18n="noFriendRequest">You don\'t have any friend requests.</p>';
+                applyTranslations(this.currentUser!.language);
                 return;
             }
             
@@ -470,6 +485,7 @@ export class FriendsView {
     }
 
     destroy(): void {
+        this.element?.remove();
         this.element = null;
     }
 }

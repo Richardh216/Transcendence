@@ -9,10 +9,9 @@ A real-time multiplayer Pong game with chat features, user profiles, authenticat
 
 ### User Management:
 - **Major**: Standard user management (registration, profiles, avatars, stats)
-- **Major**: Google Sign-in authentication
 
 ### Gameplay:
-- **Major**: Remote multiplayer functionality
+- **Major**: Multiplayer (more than 2 players in the same game).
 - **Minor**: Game customization options
 - **Major**: Live chat system
 
@@ -20,21 +19,15 @@ A real-time multiplayer Pong game with chat features, user profiles, authenticat
 - **Major**: AI opponent with strategic gameplay
 - **Minor**: User and game statistics dashboards
 
-### Cybersecurity:
-- **Major**: Two-Factor Authentication (2FA) and JWT implementation
-
 ### Accessibility:
-- **Minor**: Cross-device compatibility
 - **Minor**: Multi-browser support
+- **Minor**: Supports multiple languages.
 
 ## Table of Contents
 - [Technologies](#technologies)
 - [Features](#features)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
+- [Project Structure](#getting-started)
 - [Configuration](#configuration)
-- [Development](#development)
-- [Security Features](#security-features)
 
 ## Technologies
 
@@ -50,7 +43,7 @@ A real-time multiplayer Pong game with chat features, user profiles, authenticat
 ### Backend 
 - **Framework**: Fastify with Node.js
 - **Database**: SQLite
-- **Authentication**: JWT, Google OAuth 2.0, 2FA
+- **Authentication**: JWT
 
 ### DevOps
 - **Containerization**: Docker & Docker Compose
@@ -62,25 +55,20 @@ Our chat implementation allows users to:
 - Block unwanted communications from specific users
 - Invite friends to play games directly from the chat interface
 - Receive tournament notifications and updates
-- Access player profiles through convenient links in the chat
 
 ## Features
 
 ### Core
 - Single-page application with browser navigation support
-- Responsive design for all devices
 - Cross-browser compatibility
 
 ### User Experience
 - User registration and authentication
 - Google Sign-in integration
-- Two-factor authentication
 - Profile customization with avatars
 - Friend management system
 
 ### Gameplay
-- Real-time multiplayer Pong with latency compensation
-- AI opponents with varying difficulty levels
 - Tournament system with rankings
 - Game customization options
 - Match history and statistics
@@ -93,10 +81,7 @@ Our chat implementation allows users to:
 
 ### Security
 - JWT authentication
-- CSRF protection
-- Data privacy controls (GDPR compliant)
 - Input validation and sanitization
-- Secure  WebSockets
 
 ## Getting Started
 
@@ -108,7 +93,7 @@ Our chat implementation allows users to:
 - git clone https://github.com/derm1k43l/ft_transcendence
 - cd ft_transcendence
 - make
-- visit http://localhost:8080
+- visit https://localhost
 
 ## Commits format
 - \+ | Added something 

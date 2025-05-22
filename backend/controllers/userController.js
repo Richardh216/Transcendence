@@ -1,5 +1,5 @@
-const argon2 = require('argon2');
-const { pipeline } = require('stream/promises');
+const argon2 = require('argon2'); // library for securely hashing passwords using the Argon2 algorithm.
+const { pipeline } = require('stream/promises'); // Utility function from Node.js's built-in stream/promises module, to handle stream piping
 const path = require('path');
 const fs = require('fs');
 
@@ -48,7 +48,7 @@ const getCurrentUser = async (req, reply) => {
 			SELECT 
 			id, username, display_name, email, bio,
 			avatar_url, cover_photo_url, join_date,
-			has_two_factor_auth, status, last_active, created_at
+			has_two_factor_auth, status, last_active, created_at, language
 			FROM users 
 			WHERE id = ?
 		`).get(authenticatedUserId);
@@ -77,7 +77,7 @@ const getUser = async (req, reply) => {
 			SELECT 
 			id, username, display_name, bio,
 			avatar_url, cover_photo_url, join_date,
-			status, last_active
+			status, last_active, language
 			FROM users 
 			WHERE id = ?
 		`).get(targetUserId);
@@ -189,8 +189,9 @@ const addUser = async (req, reply) => {
 			display_name,
 			email,
 			bio,
-			// avatar_url,
-			// cover_photo_url
+			avatar_url,
+			cover_photo_url,
+			language,
 		} = req.body;
 
 		const db = req.server.betterSqlite3;
@@ -200,19 +201,18 @@ const addUser = async (req, reply) => {
 		const newUserResponse = db.transaction(() => {
 			const userResult = db.prepare(`
 			INSERT INTO users (
-				username, password, display_name, email, bio,
-				join_date, created_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?)
+				username, password, display_name, email, bio, avatar_url, cover_photo_url,
+				join_date, created_at, language
+			) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)
 			`).run(
 				username,
 				paswordHash,
 				display_name,
-				email || null,
+				email,
 				bio || null,
-				// avatar_url || null,
-				// cover_photo_url || null,
-				new Date().toISOString(),
-				new Date().toISOString()
+				avatar_url,
+				cover_photo_url,
+				language,
 			);
 
 			const newUserId = userResult.lastInsertRowid;
@@ -231,7 +231,7 @@ const addUser = async (req, reply) => {
 			SELECT
 				id, username, display_name, email, bio,
 				avatar_url, cover_photo_url, join_date,
-				has_two_factor_auth, status, last_active, created_at
+				has_two_factor_auth, status, last_active, created_at, language
 			FROM users
 			WHERE id = ?
 			`).get(newUserId);
@@ -388,7 +388,7 @@ const updateUserProfile = async (req, reply) => {
 	const setClauses = [];
 	const params = [];
 
-	const allowedFields = ['display_name', 'bio', 'avatar_url', 'cover_photo_url'];
+	const allowedFields = ['display_name', 'bio', 'avatar_url', 'cover_photo_url', 'language'];
 
 	Object.entries(updates).forEach(([key, value]) => {
 		const dbKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
@@ -420,7 +420,7 @@ const updateUserProfile = async (req, reply) => {
 			SELECT 
 			id, username, display_name, email, bio,
 			avatar_url, cover_photo_url, join_date,
-			status, last_active
+			status, last_active, language
 			FROM users 
 			WHERE id = ?
 		`).get(authenticatedUserId);
@@ -548,19 +548,18 @@ const uploadAvatar = async (req, reply) => {
 		}
 
 		// maybe implement stricter validation
-		const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-		if (!allowedTypes.includes(file.mimetype)) {
-			reply.code(415).send({ message: `Unsupported Media Type: Only ${allowedTypes.join(', ')} are allowed.` });
+		if (!file.mimetype.startsWith('image/')) {
+			reply.code(400).send({ message: 'Invalid file type. Only image files are allowed.' });
 			return;
 		}
-
 		// Generate a unique filename to avoid collisions
 		const fileExtension = path.extname(file.filename);
 		const uniqueFilename = `${targetUserId}-${Date.now()}${fileExtension}`;
 		const filePath = path.join(AVATAR_UPLOAD_DIR, uniqueFilename);
 		// const fileUrl = `/uploads/avatars/${uniqueFilename}`; // Public URL path relative to static root
 	
-		const fileUrl = `http://localhost:3000/uploads/avatars/${uniqueFilename}`; // Full URL.
+		// const fileUrl = `http://localhost:3000/uploads/avatars/${uniqueFilename}`; // Full URL.
+		const fileUrl = `/uploads/avatars/${uniqueFilename}`; // Full URL.
 		// not clean but the only way that will work with our current setup
 		// CHANGE TO HTTPS ONCE WE HAVE HTTPS!
 
@@ -626,9 +625,8 @@ const uploadCover = async (req, reply) => {
 		}
 
 		// maybe implement stricter validation
-		const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-		if (!allowedTypes.includes(file.mimetype)) {
-			reply.code(415).send({ message: `Unsupported Media Type: Only ${allowedTypes.join(', ')} are allowed.` });
+		if (!file.mimetype.startsWith('image/')) {
+			reply.code(400).send({ message: 'Invalid file type. Only image files are allowed.' });
 			return;
 		}
 
@@ -638,7 +636,8 @@ const uploadCover = async (req, reply) => {
 		const filePath = path.join(COVER_UPLOAD_DIR, uniqueFilename);
 		// const fileUrl = `/uploads/covers/${uniqueFilename}`; // Public URL path relative to static root
 	
-		const fileUrl = `http://localhost:3000/uploads/covers/${uniqueFilename}`; // Full URL.
+		// const fileUrl = `http://localhost:3000/uploads/covers/${uniqueFilename}`; // Full URL.
+		const fileUrl = `/uploads/covers/${uniqueFilename}`; // Full URL.
 		// not clean but the only way that will work with our current setup
 		// CHANGE TO HTTPS ONCE WE HAVE HTTPS!
 
@@ -732,6 +731,64 @@ const updatePassword = async (req, reply) => {
 	}
 };
 
+// Controller for POST /game-start (Set user status to 'ingame')
+const gameStart = async (req, reply) => {
+	const authenticatedUserId = req.user.id;
+	const targetUserId = parseInt(req.params.id, 10);
+
+	// AUTHORIZATION CHECK: Ensure user is updating their own status
+	if (targetUserId !== authenticatedUserId) {
+		return reply.code(403).send({ message: 'Forbidden: You can only update your own status.' });
+	}
+
+	try {
+		const db = req.server.betterSqlite3;
+
+		// update to ingame
+		const result = db.prepare('UPDATE users SET status = ?, last_active = CURRENT_TIMESTAMP WHERE id = ?').run('ingame', authenticatedUserId);
+
+		if (result.changes === 0) {
+			req.log.warn(`Game start status update attempted for user ${authenticatedUserId}, but no changes made.`);
+			return reply.code(200).send({ message: 'User status is already ingame or user not found.' });
+		}
+
+		req.log.info(`User ${authenticatedUserId} status set to ingame.`);
+		reply.code(200).send({ message: 'User status set to ingame.' });
+	} catch (error) {
+		req.log.error('Error setting user status to ingame:', error);
+		reply.code(500).send({ message: 'Failed to set user status to ingame.' });
+	}
+};
+
+// Controller for POST /game-end (Set user status back to 'online')
+const gameEnd = async (req, reply) => {
+	const authenticatedUserId = req.user.id;
+	const targetUserId = parseInt(req.params.id, 10);
+
+	// AUTHORIZATION CHECK: Ensure user is updating their own status
+	if (targetUserId !== authenticatedUserId) {
+		return reply.code(403).send({ message: 'Forbidden: You can only update your own status.' });
+	}
+
+	try {
+		const db = req.server.betterSqlite3;
+
+		// Update user status back to 'online'
+		const result = db.prepare('UPDATE users SET status = ?, last_active = CURRENT_TIMESTAMP WHERE id = ?').run('online', authenticatedUserId);
+
+		if (result.changes === 0) {
+			req.log.warn(`Game end status update attempted for user ${authenticatedUserId}, but no changes made.`);
+			return reply.code(200).send({ message: 'User status is already online or user not found.' });
+		}
+
+		req.log.info(`User ${authenticatedUserId} status set to online.`);
+		reply.code(200).send({ message: 'User status set to online.' });
+	} catch (error) {
+		req.log.error('Error setting user status to online:', error);
+		reply.code(500).send({ message: 'Failed to set user status to online.' });
+	}
+};
+
 module.exports = {
 	getUsers,
 	getCurrentUser,
@@ -747,5 +804,7 @@ module.exports = {
 	logoutUser,
 	uploadAvatar,
 	uploadCover,
-	updatePassword
+	updatePassword,
+	gameStart,
+	gameEnd
 };

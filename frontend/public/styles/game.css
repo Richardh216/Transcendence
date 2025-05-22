@@ -1,5 +1,8 @@
 .main-content {
-    align-content: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
 }
 
 /*--- Game Mode Buttons Design ---*/
@@ -70,13 +73,13 @@
     height: 590px;
     margin: 0 auto;
     position: relative;
-    margin-top: 50px;
+    margin-top: 10px;
     overflow: hidden;
     border: 2px white solid;
     box-sizing: content-box;
 }
-    
-.paddle {
+
+.paddle__left, .paddle__right {
     width: 12px;
     height: 95px;
     position: absolute;
@@ -93,6 +96,22 @@
     right: 5px;
 }
 
+.paddle__top, .paddle__bottom {
+	width: 95px;
+    height: 12px; 
+    position: absolute;
+    border-radius: 2px;
+    transform: translateX(-50%);
+}
+
+.paddle__top {
+    top: 5px;
+}
+  
+.paddle__bottom {
+    bottom: 5px;
+}
+    
 .middle__line {
     position: absolute;
     left: 50%;
@@ -115,6 +134,14 @@
     z-index: 2;
 }
 
+.powerup {
+  border: solid;
+  height: 70px;
+  width: 70px;
+  font-size: 65px;
+  margin-top: 12px;
+}
+
 .score {
     width: 950px;
     font-size: 45px;
@@ -125,40 +152,24 @@
     align-items: center; /* Vertically center the content */
 }
 
-.score__left, .score__right {
+.score__left, .score__right, .score__bottom,.score__top {
     display: flex; /* Use flexbox for grouping */
     align-items: center; /* Vertically center the content */
     gap: 8px; /* Add spacing between score and player name */
 }
 
-#leftScore, #rightScore {
+#leftScore, #rightScore, #bottomScore, #topScore {
     width: 85px;
     display: inline-block;
     border: 3px solid;
     text-align: center;
 }
 
-#player1, #player2 {
+#player1, #player2, #player3, #player4 {
     font-size: 35px;
     text-align: center;
     max-width: 320px;
     overflow: hidden;
-}
-
-#leftScore {
-    width: 85px;
-    display: inline-block;
-    border: 3px solid;
-    margin-right: 30px;
-    text-align: center;
-}
-
-#rightScore {
-    width: 85px;
-    display: inline-block;
-    border: 3px solid;
-    margin-left: 30px;
-    text-align: center;
 }
 
 #playerInputModal {
@@ -177,24 +188,7 @@
     margin: 0 auto;
 }
 
-#playerCount {
-    width: 100px; 
-    padding: 12px;
-    font-size: 18px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    border: 2px solid rgb(124, 92, 255);
-    background-color: #1a1a40;
-    color: #fff;
-}
-
-#playerCount:focus {
-    outline: none;
-    border-color: rgb(124, 92, 255);
-    background-color: #333;
-}
-
-#startGameButton {
+#twoPlayerButton, #fourPlayerButton {
     padding: 16px 30px;
     font-size: 20px;
     width: 100%;
@@ -207,8 +201,18 @@
     letter-spacing: 1px;
 }
 
-#startGameButton:hover {
+#twoPlayerButton:hover, #fourPlayerButton:hover {
     background-color: rgb(96, 68, 204);
     color: #1a1a40;
     transform: scale(1.05);
+}
+
+#game-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap; /* Ensures that the boards wrap correctly */
+    width: 100%; /* Ensure the container takes up full width */
+    box-sizing: border-box; /* Account for padding and border */
 }
