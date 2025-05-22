@@ -54,14 +54,9 @@ export class SettingsView {
                 <div class="settings-container">
                     <div class="settings-sidebar">
                         <ul class="settings-nav">
-<<<<<<< HEAD
                             <li><a href="#game" class="active" data-i18n="gamePreferences">Game Preferences</a></li>
                             <li><a href="#security" data-i18n="securityPrivacy">Security & Privacy</a></li>
                             <li><a href="#language" data-i18n="language">Language</a></li>
-=======
-                            <li><a href="#game" class="active">Game Preferences</a></li>
-                            <li><a href="#security">Security & Privacy</a></li>
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                         </ul>
                     </div>
                     
@@ -69,11 +64,7 @@ export class SettingsView {
                         
                         <!-- Game Preferences Panel -->
                         <div id="game" class="settings-panel active">
-<<<<<<< HEAD
                             <h3 data-i18n="gamePreferences">Game Preferences</h3>
-=======
-                            <h3>Game Preferences</h3>
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                             
                             <div class="settings-section">
                                 <h4 data-i18n="visualSettings">Visual Settings</h4>
@@ -136,7 +127,6 @@ export class SettingsView {
 
                         <!-- Security Panel -->
                         <div id="security" class="settings-panel">
-<<<<<<< HEAD
                             <h3 data-i18n="securityPrivacy">Security & Privacy</h3>
 
                             <div class="settings-section">
@@ -148,24 +138,10 @@ export class SettingsView {
                                         <small data-i18n="emailDescription">Your email is used for important account notifications and security features</small>
                                     </div>
                                     <button type="submit" class="app-button" data-i18n="updateEmail">Update Email</button>
-=======
-                            <h3>Security & Privacy</h3>
-
-                            <div class="settings-section">
-                                <h4>Email Address</h4>
-                                <form id="email-form" class="settings-form">
-                                    <div class="form-group">
-                                        <label for="settings-email">Email</label>
-                                        <input type="email" id="settings-email" value="${user.email || ''}">
-                                        <small>Your email is used for important account notifications and security features</small>
-                                    </div>
-                                    <button type="submit" class="app-button">Update Email</button>
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                                 </form>
                             </div>
                             
                             <div class="settings-section">
-<<<<<<< HEAD
                                 <h4 data-i18n="password">Password</h4>
                                 <form id="password-form" class="settings-form">
                                     <div class="form-group">
@@ -196,27 +172,6 @@ export class SettingsView {
                                 <option value="german" data-i18n="german" ${user.language === 'german' ? 'selected' : ''}>German</option>
                             </select>
                         </div>
-=======
-                                <h4>Password</h4>
-                                <form id="password-form" class="settings-form">
-                                    <div class="form-group">
-                                        <label for="current-password">Current Password</label>
-                                        <input type="password" id="current-password" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="new-password">New Password</label>
-                                        <input type="password" id="new-password" required>
-                                        <small class="form-hint">Use at least 8 characters</small>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="confirm-password">Confirm New Password</label>
-                                        <input type="password" id="confirm-password" required>
-                                    </div>
-                                    <button type="submit" class="app-button">Change Password</button>
-                                </form>
-                            </div>
-                        </div>
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                     </div>
                 </div>
                 

@@ -417,7 +417,6 @@ export async function setUserStats(user: UserProfile): Promise<UserStats> {
     return user.stats;
 }
 
-<<<<<<< HEAD
 export function format_date(date: Date): string {
     return date.toISOString().replace('T', ' ').substring(0, 19);
 }
@@ -448,16 +447,9 @@ export async function getAllTournaments(): Promise<Tournament[]> {
     } catch (error: any) {
         console.error(`Failed to get tournaments for user ID: `, error?.response?.data?.message || error);
         return [];
-=======
-export function setRealStatus(user: UserProfile | null) {
-    if (!user) return;
-    if (!user.status || !user.last_active) {
-        user.status = 'offline';
-        return;
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
     }
+}
 
-<<<<<<< HEAD
 export async function addTournament(tournamentInfos: {
 	id: number,
 	tournament_name: string,
@@ -496,12 +488,4 @@ export async function deleteTournament(tournamentId: number): Promise<boolean> {
         console.error(`Failed to delete tournament: ${tournamentId}`, error?.response?.data?.message || error);
         return false;
     }
-=======
-    // check for timeout
-    const timeout = new Date();
-    timeout.setMinutes(timeout.getMinutes() + 3);
-
-    if (new Date(user.last_active) < timeout)
-        user.status = 'offline';
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
 }

@@ -6,23 +6,16 @@ import {
     getChatMessages, 
     markMessagesAsRead,
     getFriendsList,
-<<<<<<< HEAD
     getLastMessageAndUnreadCount,
     setRealStatus,
     format_date,
     removeFriend
-=======
-    getLastMessageAndUnreadCount
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
 } from '../services/UserService.js';
 import { ChatMessage, UserProfile } from '../types/index.js';
 import { NotificationManager } from '../components/Notification.js';
 import { getCurrentUser } from '../services/auth.js';
 import { NULL_USER } from '../constants/defaults.js';
-<<<<<<< HEAD
 import { applyTranslations } from './Translate.js';
-=======
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
 
 export class ChatView {
     private element: HTMLElement | null = null;
@@ -36,12 +29,9 @@ export class ChatView {
     private boundContactListeners: Listener[] = [];
     private addContactListener(l: Listener) { addListener(l, this.boundContactListeners); }
     private removeContactListeners() { removeListeners(this.boundContactListeners); this.boundContactListeners = []; }
-<<<<<<< HEAD
     private boundPanelListeners: Listener[] = [];
     private addPanelListener(l: Listener) { addListener(l, this.boundPanelListeners); }
     private removePanelListeners() { removeListeners(this.boundPanelListeners); this.boundPanelListeners = []; }
-=======
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
 
     private intervalId: number | null = null;
 
@@ -68,11 +58,7 @@ export class ChatView {
             <div class="chat-container">
                 <div class="chat-sidebar">
                     <div class="chat-search">
-<<<<<<< HEAD
                         <input type="text" placeholder="Filter contacts..." id="chat-search" data-i18n="filterContacts">
-=======
-                        <input type="text" placeholder="Filter contacts..." id="chat-search">
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                     </div>
                     
                     <div class="chat-contacts" id="chat-contacts">
@@ -86,13 +72,8 @@ export class ChatView {
                     <div class="chat-panel welcome-panel active" id="welcome-panel">
                         <div class="chat-welcome">
                             <i class="fas fa-comments"></i>
-<<<<<<< HEAD
                             <h3 data-i18n="welcomeToChat">Welcome to Chat</h3>
                             <p data-i18n="selectContact">Select a contact to start chatting.</p>
-=======
-                            <h3>Welcome to Chat</h3>
-                            <p>Select a contact to start chatting.</p>
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                         </div>
                     </div>
                     
@@ -118,12 +99,8 @@ export class ChatView {
         `;
 
         rootElement.appendChild(this.element);
-<<<<<<< HEAD
         applyTranslations(this.currentUser.language);
 
-=======
-        
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         await this.renderContacts();
         await this.setupEventListeners();
         await this.renderActiveChat();
@@ -143,7 +120,6 @@ export class ChatView {
         if (!contactsContainer) return;
         const friends = await getFriendsList(this.currentUser.id);
         if (friends.length === 0) {
-<<<<<<< HEAD
             contactsContainer.innerHTML = '<span data-i18n="noContacts">No contacts</span>';
             applyTranslations(this.currentUser.language);
             return;
@@ -220,68 +196,6 @@ export class ChatView {
                 }
             }
         });
-=======
-            contactsContainer.innerHTML = 'No contacts';
-            return;
-        }
-
-        let newHTML: string = '';
-        for (const friend of friends) {
-            const {lastMessage, unreadCount} = (await getLastMessageAndUnreadCount(this.currentUser.id, friend.friend_id));
-            newHTML += `
-            <div class="chat-contact" data-id="${friend.friend_id}">
-            <div class="chat-contact-avatar">
-            <img src="${friend.friend_avatar_url}" alt="${friend.friend_display_name}">
-            <span class="chat-status ${friend.friend_status}"></span>
-            </div>
-            <div class="chat-contact-info">
-            <h4>${friend.friend_display_name}</h4>
-            <p class="chat-last-message">
-            ${lastMessage ? lastMessage.content.slice(0, 30) : 'No messages yet'}
-            </p>
-            </div>
-            <div class="chat-contact-meta">
-            <span class="chat-time">${lastMessage ? this.formatMessageTime(new Date(lastMessage.timestamp)) : ''}</span>
-            ${unreadCount > 0 ? `<span class="chat-unread">${unreadCount}</span>` : ''}
-            </div>
-            </div>
-            `;
-        }
-        contactsContainer.innerHTML = newHTML;
-        this.setupContactListeners();
-    }
-
-    private setupEventListeners() {
-        // Setup search/filter listener
-        const searchInput = this.element?.querySelector('#chat-search') as HTMLInputElement;
-        if (searchInput) this.addListener({
-            element: searchInput,
-            event: 'input',
-            handler: () => { this.filterContacts(searchInput.value); }
-        });
-
-        // Send button
-        const sendButton = this.element?.querySelector('#send-button');
-        if (sendButton) this.addListener({
-            element: sendButton,
-            event: 'click',
-            handler: () => { this.sendNewMessage(); }
-        });
-
-        // Textbox
-        const messageInput = this.element?.querySelector('#message-input');
-        if (messageInput) this.addListener({
-            element: messageInput,
-            event: 'keydown',
-            handler: (event) => {
-                // const kbEvent = event as KeyboardEvent;
-                if ((event as KeyboardEvent).key === 'Enter' && !(event as KeyboardEvent).shiftKey) {
-                    (event as KeyboardEvent).preventDefault();
-                    this.sendNewMessage();
-                }
-            }
-        });
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
     }
 
     private setupContactListeners() {
@@ -297,17 +211,13 @@ export class ChatView {
                 handler: () => {
                     this.activeChatPartnerId = Number(contact.getAttribute('data-id'));
                     this.renderActiveChat();
-<<<<<<< HEAD
                     const messageInput = this.element?.querySelector('#message-input') as HTMLInputElement;
                     messageInput?.focus();
-=======
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                 }
             });
         }
     }
 
-<<<<<<< HEAD
     private setupPanelListeners() {
         this.removePanelListeners();
         const inviteButton = this.element?.querySelector('.invite-button');
@@ -363,8 +273,6 @@ export class ChatView {
         });
     }
 
-=======
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
     private activateContact() {
         if (!this.activeChatPartnerId) return;
         const contacts = this.element?.querySelectorAll('.chat-contact');
@@ -372,23 +280,11 @@ export class ChatView {
         for (const contact of contacts)
         {
             // Update active contact
-<<<<<<< HEAD
             const contactId = Number(contact.getAttribute('data-id'));
             if (contactId === this.activeChatPartnerId)
                 contact.classList.add('active');
             else
                 contact.classList.remove('active');
-=======
-            contact.classList.remove('active');
-            const contactId = Number(contact.getAttribute('data-id'));
-            if (contactId === this.activeChatPartnerId)
-                contact.classList.add('active');
-            // // Update URL without full navigation
-            // const newUrl = `#/chat/${contactId}`;
-            // if (window.location.hash !== newUrl) {
-            //     history.pushState(null, '', newUrl);
-            // }
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         }
     }
 
@@ -413,17 +309,7 @@ export class ChatView {
                 messagesContainer.innerHTML = '<div class="chat-no-messages">User not found</div>';
                 return;
             }
-<<<<<<< HEAD
             setRealStatus(partner);
-=======
-
-            // Get chat mesasges
-            const messages = await getChatMessages(this.currentUser.id, partner.id);
-            if (messages.length === 0) {
-                messagesContainer.innerHTML = '<div class="chat-no-messages"><p>No messages yet. Start a conversation!</p></div>';
-                return;
-            }
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
 
             // Render header
             const statusClass = partner.status ? partner.status : 'offline';
@@ -443,7 +329,6 @@ export class ChatView {
                 </div>
             `;
 
-<<<<<<< HEAD
             // Get chat mesasges
             const messages = await getChatMessages(this.currentUser.id, partner.id);
             if (messages.length === 0) {
@@ -457,18 +342,6 @@ export class ChatView {
             await this.renderContacts();
             this.activateContact();
             this.setupPanelListeners();
-=======
-            // Render messages
-            // messagesContainer.innerHTML = messages.map((msg: ChatMessage) => this.renderMessage(msg)).join('');
-            this.renderAllMessages(messages);
-
-            // Mark messages as read
-            const messageInput = this.element?.querySelector('#message-input') as HTMLInputElement;
-            messageInput?.focus();
-            await markMessagesAsRead(messages);
-            await this.renderContacts();
-            this.activateContact();
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         } catch (error) {
             console.error("Error loading chat:", error);
             messagesContainer.innerHTML = '<div class="error">Failed to load messages. Please try again.</div>';
@@ -496,10 +369,7 @@ export class ChatView {
                 messageInput.focus();
                 // Update contact list to show new last message
                 await this.renderContacts();
-<<<<<<< HEAD
                 this.activateContact();
-=======
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
             }
         } catch (error) {
             console.error("Error sending message:", error);
@@ -515,11 +385,7 @@ export class ChatView {
         const messagesContainer = this.element?.querySelector('#chat-messages');
         if (!messagesContainer) return;
         const isFromCurrentUser = message.sender_id === this.currentUser.id;
-<<<<<<< HEAD
         const time = this.formatMessageTime(message.timestamp);
-=======
-        const time = this.formatMessageTime(new Date(message.timestamp));
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         
         messagesContainer.innerHTML += `
             <div class="chat-message ${isFromCurrentUser ? 'sent' : 'received'}">
@@ -541,11 +407,7 @@ export class ChatView {
         let newHTML: string = '';
         for (const msg of messages) {
             const isFromCurrentUser = msg.sender_id === this.currentUser.id;
-<<<<<<< HEAD
             const time = this.formatMessageTime(msg.timestamp);
-=======
-            const time = this.formatMessageTime(new Date(msg.timestamp));
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
             
             newHTML += `
                 <div class="chat-message ${isFromCurrentUser ? 'sent' : 'received'}">
@@ -595,12 +457,8 @@ export class ChatView {
         });
     }
 
-<<<<<<< HEAD
     private formatMessageTime(date: string): string {
         const utcDate = new Date(date.replace(' ', 'T') + 'Z');
-=======
-    private formatMessageTime(date: Date): string {
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         const now = new Date();
 
         const utcNow = new Date(Date.UTC(
@@ -633,10 +491,7 @@ export class ChatView {
         console.log("--- DESTROYING CHAT VIEW ---");
         if (this.intervalId) clearInterval(this.intervalId);
         this.removeListeners();
-<<<<<<< HEAD
         this.removePanelListeners();
-=======
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         this.removeContactListeners();
         this.element?.remove();
         this.element = null; 

@@ -437,7 +437,6 @@ function createAppView(): void {
   appViewElement.innerHTML = '';
   
   const appHTML = `
-<<<<<<< HEAD
   <div class="app-layout-container">
       <div class="app-layout">
           <aside class="sidebar">
@@ -471,40 +470,6 @@ function createAppView(): void {
   <div class="sidebar-overlay"></div>
 `;
 
-=======
-      <div class="app-layout-container">
-          <div class="app-layout">
-              <aside class="sidebar">
-                  <div class="user-profile">
-                    <img src="${currentUser.avatar_url || 'https://placehold.co/80x80/1d1f21/ffffff?text=User'}" 
-                           alt="${sanitizeInput(currentUser.display_name)}'s avatar" 
-                           class="avatar">
-                      <span class="username">${sanitizeInput(currentUser.display_name)}</span>
-                  </div>
-                  <nav class="sidebar-nav">
-                      <ul>
-                          <li><a href="#/" data-view="dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-                          <li><a href="#/profile" data-view="profile"><i class="fas fa-user"></i> Profile</a></li>
-                          <li><a href="#/chat" data-view="chat"><i class="fas fa-comments"></i> Chat</a></li>
-                          <li><a href="#/friends" data-view="friends"><i class="fas fa-user-friends"></i> Friends</a></li>
-                          <li><a href="#/game" data-view="game"><i class="fas fa-gamepad"></i> Game</a></li>
-                          <li><a href="#/tournament" data-view="tournament"><i class="fas fa-trophy"></i> Tournament</a></li>
-                          <li><a href="#/settings" data-view="settings"><i class="fas fa-cog"></i> Settings</a></li>
-                          <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                      </ul>
-                  </nav>
-              </aside>
-              <main class="main-content" id="app-content-root"> 
-                  <!-- Dynamic content will go here -->
-              </main>
-          </div>
-      </div>
-      <button class="menu-toggle" aria-controls="sidebar" aria-expanded="false" aria-label="Open menu">
-          <i class="fas fa-bars"></i>
-      </button>
-      <div class="sidebar-overlay"></div>
-  `;
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
   
   // Set the HTML
   appViewElement.innerHTML = appHTML;
@@ -536,21 +501,34 @@ function setupRouterTarget(): void {
 }
 
 // XSS simple sanitizer 
-<<<<<<< HEAD
-function sanitizeInput(input: string | null | undefined): string {
-=======
-function sanitizeInput(input: string): string {
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
+function sanitizeInput(input: string | undefined): string {
     if (!input) return '';
-    return input
+
+    // Step 1: Replace known dangerous characters
+    let sanitized = input
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-<<<<<<< HEAD
         .replace(/'/g, '&#039;')
-        .trim();
-=======
-        .replace(/'/g, '&#039;');
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
+        .replace(/&#x27;/g, '&#039;')
+        .replace(/&#x2F;/g, '/')
+        .replace(/&#x3B;/g, ';')
+        .replace(/\u2028/g, '&#x2028;')
+        .replace(/\u2029/g, '&#x2029;')
+        .replace(/\x00/g, '&#x00;')
+        .replace(/\t/g, '&#x09;')
+        .replace(/\n/g, '&#x0A;')
+        .replace(/\r/g, '&#x0D;');
+
+    // Step 2: Handle obfuscated script injections using Unicode and other patterns
+    sanitized = sanitized.replace(/[\u200B\u200C\u200D\u200E\u200F\u202A\u202B\u202C\u202D\u202E]/g, ''); // Zero-width characters
+
+    // Step 3: Block potentially dangerous URLs
+    sanitized = sanitized.replace(/javascript:/gi, '')
+                         .replace(/data:/gi, '')
+                         .replace(/vbscript:/gi, '')
+                         .replace(/on\w+=/gi, '');
+
+    return sanitized.trim();
 }

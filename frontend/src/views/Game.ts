@@ -24,27 +24,17 @@ export class GameView {
             </div>
             <div id="playerInputModal" style="display: none;">
                 <div id="playerCountSelection" style="display: none;">
-<<<<<<< HEAD
                     <p data-i18n="selectPlayers">Select number of players:</p>
                     <button id="twoPlayerButton" data-i18n="twoPlayers">2 Players</button>
                     <button id="fourPlayerButton" data-i18n="fourPlayers">4 Players</button>
-=======
-                    <p>Select number of players:</p>
-                    <button id="twoPlayerButton">2 Players</button>
-                    <button id="fourPlayerButton">4 Players</button>
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
                 </div>
             </div>
             <div id="game-container"></div>
         `;
-<<<<<<< HEAD
         
         const user = await getCurrentUser();
         if (user) applyTranslations(user.language);
         
-=======
-    
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
         // Querying DOM elements
         const modeContainer = container.querySelector('#modeContainer') as HTMLElement;
         const singleplayerButton = container.querySelector('#singleplayerButton') as HTMLButtonElement;
@@ -66,7 +56,6 @@ export class GameView {
             modeContainer.style.display = 'none';
             playerInputModal.style.display = 'block';
             playerCountSelection.style.display = 'block';
-<<<<<<< HEAD
         });
     
         // 2-player mode
@@ -80,21 +69,6 @@ export class GameView {
             playerInputModal.style.display = 'none';
             this.startGame(modeContainer, gameContainer, 4);
         });
-=======
-        });
-    
-        // 2-player mode
-        twoPlayerButton.addEventListener('click', () => {
-            playerInputModal.style.display = 'none';
-            this.startGame(modeContainer, gameContainer, 2);
-        });
-    
-        // 4-player mode
-        fourPlayerButton.addEventListener('click', () => {
-            playerInputModal.style.display = 'none';
-            this.startGame(modeContainer, gameContainer, 4);
-        });
->>>>>>> 38a3d95fb112396268e8502d5d25d8da53524bbd
     }       
 
     // Starts the Pong game, passing the container and the mode (single player or multiplayer)
